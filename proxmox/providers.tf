@@ -22,7 +22,9 @@ terraform {
 }
 
 provider "proxmox" {
-  pm_api_url      = "https://192.168.100.20:8006/api2/json"
-  pm_debug        = true
-  pm_tls_insecure = true
+  pm_api_url          = "https://192.168.100.20:8006/api2/json"
+  pm_debug            = true
+  pm_tls_insecure     = true
+  pm_api_token_id     = "terraform-prov@pve!terraform"
+  pm_api_token_secret = var.proxmox_api_token_secret # set as TF_VAR_proxmox_api_token_secret in local env
 }

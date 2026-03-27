@@ -8,9 +8,15 @@ resource "proxmox_vm_qemu" "control_plane" {
   sockets = 1
 
   # Memory Configuration (in MB)
-  memory  = 4096
+  memory  = 4096 # 4GB
   balloon = 0
   machine = "q35"
+
+  startup_shutdown {
+    order = -1
+    shutdown_timeout = -1
+    startup_delay = -1
+  }
 
   # Disk Configuration
   scsihw = "virtio-scsi-single"
@@ -69,6 +75,12 @@ resource "proxmox_vm_qemu" "worker_node" {
   memory  = 6144
   balloon = 0
   machine = "q35"
+
+  startup_shutdown {
+    order = -1
+    shutdown_timeout = -1
+    startup_delay = -1
+  }
 
   # Disk Configuration
   scsihw = "virtio-scsi-single"
