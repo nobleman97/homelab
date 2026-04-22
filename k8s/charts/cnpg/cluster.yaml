@@ -1,0 +1,34 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: master-db
+spec:
+  instances: 1          # 1 primary + 2 replicas; use 1 for dev
+  # primaryUpdateStrategy: unsupervised
+
+  # postgresql:
+  #   parameters:
+  #     max_connections: "200"
+
+  # bootstrap:
+  #   initdb:
+  #     database: n8n
+  #     owner: n8n
+  #     secret:
+  #       name: n8n-db-credentials   # see below
+
+  storage:
+    size: 10Gi
+
+  # backup:                          # optional but recommended
+  #   retentionPolicy: "30d"
+  #   barmanObjectStore:
+  #     destinationPath: "s3://your-bucket/n8n-postgres"
+  #     s3Credentials:
+  #       accessKeyId:
+  #         name: s3-creds
+  #         key: ACCESS_KEY_ID
+  #       secretAccessKey:
+  #         name: s3-creds
+  #         key: SECRET_ACCESS_KEY
+  
