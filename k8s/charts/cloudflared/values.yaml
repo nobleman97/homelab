@@ -6,7 +6,9 @@ ingress:
     service: http://n8n.apps.svc.cluster.local:80
   - hostname: calc.osose.xyz
     service: http://subnet-calculator.apps.svc.cluster.local:80
-    
+  - hostname: argo.osose.xyz
+    service: http://argo-argocd-server.argocd.svc.cluster.local:80
+
   - service: http_status:404
 
 
@@ -18,3 +20,4 @@ tunnelSecrets:
     name: cert-pem-file-secret
     key: cfd_cert.pem
 
+# helm upgrade --install cloudflared community-charts/cloudflared -f values.yaml -n cloudflare
