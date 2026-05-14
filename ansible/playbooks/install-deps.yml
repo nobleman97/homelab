@@ -1,0 +1,24 @@
+---
+- name: Install dependencies on k8s nodes
+  hosts: k8s_nodes
+  become: true
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - util-linux
+          - curl
+          - grep
+          - gawk
+          - open-iscsi
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Enable and start iscsid service
+      systemd:
+        name: iscsid
+        enabled: true
+        state: started  
+
