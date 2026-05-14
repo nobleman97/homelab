@@ -4,6 +4,23 @@ global:
 configs:
   params:
     server.insecure: true
+
+  cm:
+    oidc.config: |
+      name: authentik
+      issuer: https://auth.osose.xyz/application/o/argocd/
+      clientID: oLyMdhljwzKAJP7ySnVO0XvB5VaXYrP4ROEAafNz
+      clientSecret: $oidc.authentik.clientSecret
+      requestedScopes:
+        - openid
+        - profile
+        - email
+        - groups
+
+  rbac:
+    policy.csv: |
+      g, argocd-admins, role:admin
+    policy.default: role:readonly
     
 server:
   ingress:
@@ -19,4 +36,4 @@ server:
 
 
 
-# helm install my-argo-cd argo/argo-cd --version 9.5.4 -f values.yaml -n argocd
+# helm install argocd argo/argo-cd --version 9.5.4 -f values.yaml -n argocd
