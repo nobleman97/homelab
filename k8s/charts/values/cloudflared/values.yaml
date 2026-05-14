@@ -10,6 +10,8 @@ ingress:
     service: http://argo-argocd-server.argocd.svc.cluster.local:80
   - hostname: auth.osose.xyz
     service: http://authentik-server.apps.svc.cluster.local:80
+  - hostname: longhorn.osose.xyz
+    service: http://longhorn-frontend.longhorn-system.svc.cluster.local:80
 
   - service: http_status:404
 
