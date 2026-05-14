@@ -9,6 +9,7 @@ resource "proxmox_vm_qemu" "vm" {
   balloon = 0
   machine = "q35"
   start_at_node_boot = var.start_at_node_boot
+  tags               = length(var.tags) > 0 ? join(";", var.tags) : null
 
   startup_shutdown {
     order            = -1

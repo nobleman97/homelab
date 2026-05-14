@@ -56,3 +56,9 @@ variable "start_at_node_boot" {
   type        = bool
   default     = true
 }
+
+variable "tags" {
+  type        = list(string)
+  description = "Tags to apply to the VM in Proxmox (used by Ansible dynamic inventory)"
+  default     = []
+}
