@@ -1,0 +1,33 @@
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: longhorn-delete
+provisioner: driver.longhorn.io
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+parameters:
+  numberOfReplicas: "2"
+  staleReplicaTimeout: "2880"
+  fromBackup: ""
+  fsType: "ext4"
+  migratable: "true"
+
+---
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: longhorn-retain
+provisioner: driver.longhorn.io
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+parameters:
+  numberOfReplicas: "2"
+  staleReplicaTimeout: "2880"
+  fromBackup: ""
+  fsType: "ext4"
+  migratable: "true"
