@@ -1,0 +1,101 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: master-db
+  namespace: database
+spec:
+  instances: 1          # 1 primary + 2 replicas; use 1 for dev
+  # primaryUpdateStrategy: unsupervised
+
+  bootstrap:
+    recovery:
+      source: master-db-backup # use backup from object store to initialize cluster
+
+  externalClusters:
+    - name: master-db-backup
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: master-db-store  # restore from this backup
+
+  storage:
+    size: 10Gi
+    storageClass: longhorn-retain
+
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: master-db-store-v2  # archive to new path post-recovery
+
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: master-db-store        # restore source — existing WALs and base backups
+  namespace: database
+spec:
+  retentionPolicy: "14d"
+  configuration:
+    destinationPath: "s3://objectstore-199174511003-us-east-1-an"
+    s3Credentials:
+      accessKeyId:
+        name: s3-creds
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: s3-creds
+        key: SECRET_ACCESS_KEY
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
+
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: master-db-store-v2     # archive destination after recovery — empty path
+  namespace: database
+spec:
+  retentionPolicy: "14d"
+  configuration:
+    destinationPath: "s3://objectstore-199174511003-us-east-1-an/v2"
+    s3Credentials:
+      accessKeyId:
+        name: s3-creds
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: s3-creds
+        key: SECRET_ACCESS_KEY
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
+
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: master-db-daily
+  namespace: database
+spec:
+  schedule: "0 50 1 * * *"
+  backupOwnerReference: self
+  cluster:
+    name: master-db
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+
+# ---
+# apiVersion: postgresql.cnpg.io/v1
+# kind: Backup
+# metadata:
+#   name: master-db-manual-01
+#   namespace: database
+# spec:
+#   cluster:
+#     name: master-db
+#   method: plugin
+#   pluginConfiguration:
+#     name: barman-cloud.cloudnative-pg.io
