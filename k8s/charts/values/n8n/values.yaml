@@ -1,0 +1,46 @@
+config:
+  database:
+    type: postgresdb
+    postgresdb:
+      host: master-db-rw.database.svc.cluster.local
+      port: 5432
+      database: n8n
+
+
+existingSecret: n8n-db-credentials
+
+persistence:
+  enabled: true
+  size: 2Gi
+  accessMode: ReadWriteOnce
+  storageClass: local-path
+
+ingress:
+  enabled: false
+  annotations: { }
+  # kubernetes.io/ingress.class: nginx
+  # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: n8n.osose.xyz
+      paths: [ ]
+  tls: [ ]
+  #  - secretName: n8n-tls
+  #    hosts:
+  #      - n8n.osose.xyz
+
+extraEnv:
+  N8N_BASIC_AUTH_ACTIVE: "true"
+  N8N_BASIC_AUTH_USER: "admin"
+  N8N_BASIC_AUTH_PASSWORD: "admin"
+  N8N_HOST: "n8n.osose.xyz"
+  N8N_PROTOCOL: "https"
+  WEBHOOK_TUNNEL_URL: "https://n8n.osose.xyz"
+  N8N_EDITOR_BASE_URL: "https://n8n.osose.xyz"
+  N8N_USER_MANAGEMENT_DISABLED: "false"
+  N8N_PUBLIC_API_DISABLED: "false"
+  N8N_TRUST_PROXY: "true"
+  N8N_SECURE_COOKIE: "true"
+  N8N_DIAGNOSTICS_ENABLED: "false"
+
+
+#  helm upgrade  --install n8n oci://8gears.container-registry.com/library/n8n --version 2.0.1 -f values.yaml -n apps

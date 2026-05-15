@@ -1,0 +1,6 @@
+crds:
+  enabled: true
+
+global:
+  image:
+    repository: registry.k8s.io/cert-manager-controller 

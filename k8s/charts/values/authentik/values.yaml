@@ -1,0 +1,34 @@
+---
+
+## Globally shared configuration for authentik components.
+global:
+  # -- Secrets with credentials to pull images from a private registry
+  imagePullSecrets: []
+  deploymentAnnotations: {}
+  podAnnotations: {}
+
+  secretAnnotations: {}
+  podLabels: {}
+  addPrometheusAnnotations: false
+  securityContext: {}
+  hostAliases: []
+  priorityClassName: ""
+  nodeSelector: {}
+  tolerations: []
+
+authentik:
+  # -- whether to create the authentik configuration secret
+  enabled: false
+
+  existingSecret:
+    secretName: authentik
+
+server:
+  # -- whether to enable server resources
+  enabled: true
+
+  ingress:
+    # -- enable an ingress resource for the authentik server
+    enabled: false
+
+# helm upgrade  --install authentik goauthentik/authentik --version 2026.2.3 -f values.yaml -n apps  

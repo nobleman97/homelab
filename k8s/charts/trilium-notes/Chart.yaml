@@ -1,0 +1,37 @@
+annotations:
+  artifacthub.io/links: |-
+    - name: support
+    url: https://discord.com/invite/tVsPTHWTtr
+  truecharts.org/train: stable
+  trueforge.org/category: media
+  trueforge.org/max_helm_version: "4.1"
+  trueforge.org/max_kubernetes_version: 1.35.0
+  trueforge.org/min_helm_version: "3.14"
+  trueforge.org/train: stable
+apiVersion: v2
+appVersion: 0.63.7
+dependencies:
+- name: common
+  repository: oci://oci.trueforge.org/truecharts
+  version: 29.3.4
+description: Trilium Notes is a hierarchical note taking application with focus on
+  building large personal knowledge bases.
+home: https://truecharts.org/charts/stable/trilium-notes
+icon: https://truecharts.org/img/hotlink-ok/chart-icons/trilium-notes.webp
+keywords:
+- trilium
+- notes
+- note
+- information
+kubeVersion: '>=1.33.0-0'
+maintainers:
+- email: info@truecharts.org
+  name: TrueCharts
+  url: https://truecharts.org
+name: trilium-notes
+sources:
+- https://ghcr.io/zadam/trilium
+- https://github.com/trueforge-org/truecharts/tree/master/charts/stable/trilium-notes
+- https://github.com/zadam/trilium
+type: application
+version: 16.3.0

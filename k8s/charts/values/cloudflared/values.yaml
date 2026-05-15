@@ -1,0 +1,27 @@
+tunnelConfig:
+  name: homelab
+
+ingress:
+  - hostname: n8n.osose.xyz
+    service: http://n8n.apps.svc.cluster.local:80
+  - hostname: calc.osose.xyz
+    service: http://subnet-calculator.apps.svc.cluster.local:80
+  - hostname: argo.osose.xyz
+    service: http://argo-argocd-server.argocd.svc.cluster.local:80
+  - hostname: auth.osose.xyz
+    service: http://authentik-server.apps.svc.cluster.local:80
+  - hostname: longhorn.osose.xyz
+    service: http://longhorn-frontend.longhorn-system.svc.cluster.local:80
+
+  - service: http_status:404
+
+
+tunnelSecrets:
+  existingConfigJsonFileSecret:
+    name: config-json-file-secret
+    key: cfd_credentials.json
+  existingPemFileSecret:
+    name: cert-pem-file-secret
+    key: cfd_cert.pem
+
+# helm upgrade --install cloudflared community-charts/cloudflared -f values.yaml -n cloudflare
