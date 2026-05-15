@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudflared
+  namespace: argocd
+spec:
+  destination:
+    namespace: cloudflare
+    server: https://kubernetes.default.svc
+  sources:
+    - repoURL: https://community-charts.github.io/helm-charts
+      chart: cloudflared
+      targetRevision: 2.2.7
+      helm:
+        valueFiles:
+          - $values/k8s/charts/values/cloudflared/values.yaml
+    - repoURL: https://github.com/nobleman97/homelab.git
+      targetRevision: feature/eks-setup
+      ref: values
+  project: default
+  syncPolicy:
+    automated: {}
