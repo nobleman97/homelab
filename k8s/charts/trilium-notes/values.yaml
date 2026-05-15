@@ -1,8 +1,8 @@
+# yaml-language-server: $schema=./values.schema.json
 image:
   repository: ghcr.io/zadam/trilium
   pullPolicy: IfNotPresent
   tag: 0.63.7@sha256:a0b5a6a5fd7a64391ae6039bbcd5493151a77a1d5470ef5911923c64d0c232c0
-
 service:
   main:
     ports:
@@ -10,14 +10,10 @@ service:
         protocol: http
         targetPort: 8080
         port: 10156
-
 persistence:
   config:
     enabled: true
-    mountPath: /home/node
-    storageClass: longhorn-retain
-    accessMode: ReadWriteOnce
-    size: 5Gi
+    mountPath: "/home/node"
 
 securityContext:
   container:
@@ -25,8 +21,3 @@ securityContext:
     runAsUser: 0
     runAsGroup: 0
     fsGroup: 1000
-
-ingress:
-  main:
-    enabled: false
-
