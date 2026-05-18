@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: trilium-notes
+  namespace: apps
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`notes.osose.xyz`)
+      kind: Rule
+      middlewares:
+        - name: authentik-forward-auth
+      services:
+        - name: trilium-notes
+          port: 10156
