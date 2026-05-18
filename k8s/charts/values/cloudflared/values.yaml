@@ -13,7 +13,7 @@ ingress:
   - hostname: longhorn.osose.xyz
     service: http://longhorn-frontend.longhorn-system.svc.cluster.local:80
   - hostname: notes.osose.xyz
-    service: http://trilium-notes.apps.svc.cluster.local:10156
+    service: http://traefik.kube-system.svc.cluster.local:80
 
   - service: http_status:404
 
