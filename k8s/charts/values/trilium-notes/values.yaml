@@ -18,6 +18,24 @@ persistence:
     storageClass: longhorn-retain
     accessMode: ReadWriteOnce
     size: 5Gi
+    targetSelector:
+      main:
+        main: {}
+        patch-config:
+          mountPath: /home/node
+
+workload:
+  main:
+    podSpec:
+      initContainers:
+        patch-config:
+          type: init
+          enabled: true
+          imageSelector: image
+          command:
+            - /bin/sh
+            - -c
+            - sed -i 's/trustedReverseProxy=false/trustedReverseProxy=uniquelocal/' /home/node/trilium-data/config.ini || true
 
 securityContext:
   container:
