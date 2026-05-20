@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Better — DevOps Demo</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <span class="logo">better<span class="dot">.</span></span>
+      <div class="header-meta">
+        <span class="version-badge" id="version-badge">—</span>
+        <span class="header-label">backend</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left: product catalog -->
+    <section class="catalog">
+      <div class="section-header">
+        <h2>Products</h2>
+        <div class="controls">
+          <select id="category-filter">
+            <option value="">All categories</option>
+            <option value="electronics">Electronics</option>
+            <option value="clothing">Clothing</option>
+            <option value="books">Books</option>
+            <option value="home">Home</option>
+            <option value="sports">Sports</option>
+          </select>
+          <input type="text" id="search-input" placeholder="Search…" />
+        </div>
+      </div>
+
+      <div class="product-grid" id="product-grid">
+        <div class="skeleton-grid">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+      </div>
+
+      <div class="pagination" id="pagination"></div>
+    </section>
+
+    <!-- Right: metrics dashboard -->
+    <aside class="dashboard">
+      <h2>Live Metrics</h2>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <span class="stat-value" id="stat-products">—</span>
+          <span class="stat-label">Total products</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-orders-today">—</span>
+          <span class="stat-label">Orders today</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-opm">—</span>
+          <span class="stat-label">Orders / min</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-avg-value">—</span>
+          <span class="stat-label">Avg order value</span>
+        </div>
+      </div>
+
+      <div class="chart-block">
+        <h3>Top categories today</h3>
+        <canvas id="categories-chart" height="180"></canvas>
+      </div>
+
+      <div class="recent-orders">
+        <h3>Recent orders</h3>
+        <table id="orders-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="orders-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Order form -->
+      <div class="order-form">
+        <h3>Place order</h3>
+        <form id="order-form">
+          <input type="number" id="order-product-id" placeholder="Product ID" min="1" required />
+          <input type="number" id="order-quantity" placeholder="Qty" min="1" max="100" value="1" required />
+          <button type="submit">Order</button>
+        </form>
+        <p class="order-feedback" id="order-feedback"></p>
+      </div>
+    </aside>
+  </main>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
