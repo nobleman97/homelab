@@ -1,0 +1,18 @@
+[Unit]
+Description=Better Demo API — green
+After=network.target
+
+[Service]
+Type=simple
+User=better
+WorkingDirectory=/opt/better/app
+Environment=APP_VERSION=green
+Environment=DATABASE_URL=postgresql://appuser:apppassword@192.168.100.33:5432/demo
+ExecStart=/opt/better/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8002 --workers 2
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

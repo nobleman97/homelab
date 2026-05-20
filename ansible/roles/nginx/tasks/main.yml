@@ -1,0 +1,123 @@
+---
+- name: Install NGINX
+  apt:
+    name: nginx
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Remove default NGINX site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload NGINX
+
+- name: Deploy stub_status config
+  template:
+    src: stub_status.conf.j2
+    dest: /etc/nginx/conf.d/stub_status.conf
+    mode: "0644"
+  notify: Reload NGINX
+
+- name: Deploy better site config
+  template:
+    src: better.conf.j2
+    dest: /etc/nginx/sites-available/better.conf
+    mode: "0644"
+  notify: Reload NGINX
+
+- name: Enable better site
+  file:
+    src: /etc/nginx/sites-available/better.conf
+    dest: /etc/nginx/sites-enabled/better.conf
+    state: link
+  notify: Reload NGINX
+
+- name: Create frontend document root
+  file:
+    path: /var/www/better
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Copy frontend files
+  copy:
+    src: "{{ playbook_dir }}/../../projects/better/frontend/"
+    dest: /var/www/better/
+    owner: www-data
+    group: www-data
+    mode: "0644"
+  notify: Reload NGINX
+
+- name: Enable and start NGINX
+  systemd:
+    name: nginx
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Download nginx-prometheus-exporter
+  get_url:
+    url: "https://github.com/nginx/nginx-prometheus-exporter/releases/download/v1.3.0/nginx-prometheus-exporter_1.3.0_linux_amd64.tar.gz"
+    dest: /tmp/nginx-prometheus-exporter.tar.gz
+    mode: "0644"
+
+- name: Create extraction directory for nginx-prometheus-exporter
+  file:
+    path: /tmp/nginx-prometheus-exporter
+    state: directory
+    mode: "0755"
+
+- name: Extract nginx-prometheus-exporter
+  unarchive:
+    src: /tmp/nginx-prometheus-exporter.tar.gz
+    dest: /tmp/nginx-prometheus-exporter/
+    remote_src: true
+
+- name: Install nginx-prometheus-exporter binary
+  copy:
+    src: /tmp/nginx-prometheus-exporter/nginx-prometheus-exporter
+    dest: /usr/local/bin/nginx-prometheus-exporter
+    mode: "0755"
+    remote_src: true
+
+- name: Create nginx-prometheus-exporter systemd service
+  copy:
+    dest: /etc/systemd/system/nginx-prometheus-exporter.service
+    content: |
+      [Unit]
+      Description=NGINX Prometheus Exporter
+      After=network.target nginx.service
+
+      [Service]
+      Type=simple
+      User=nobody
+      ExecStart=/usr/local/bin/nginx-prometheus-exporter \
+        --nginx.scrape-uri=http://127.0.0.1:8080/stub_status
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Enable and start nginx-prometheus-exporter
+  systemd:
+    name: nginx-prometheus-exporter
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Allow HTTP/HTTPS through ufw
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "80"
+    - "443"
+
+- name: Allow nginx-prometheus-exporter port through ufw
+  ufw:
+    rule: allow
+    port: "9113"
+    proto: tcp

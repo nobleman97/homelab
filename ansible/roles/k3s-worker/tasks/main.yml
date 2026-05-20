@@ -1,0 +1,81 @@
+---
+- name: Assert k3s_token is defined
+  assert:
+    that: k3s_token is defined and k3s_token | length > 0
+    fail_msg: "k3s_token must be set (pass via --extra-vars, group_vars, or vault)"
+
+- name: Update and upgrade apt packages
+  apt:
+    update_cache: true
+    upgrade: dist
+    cache_valid_time: 0
+
+- name: Disable swap immediately
+  command: swapoff -a
+  changed_when: false
+
+- name: Disable swap permanently in fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\s+swap\s+.*)$'
+    replace: '#\1'
+
+- name: Prevent cloud-init from resetting hostname
+  copy:
+    dest: /etc/cloud/cloud.cfg.d/99-disable-hostname.cfg
+    content: "preserve_hostname: true\n"
+    mode: "0644"
+
+- name: Set hostname
+  hostname:
+    name: "{{ k3s_node_name }}"
+
+- name: Add k3s nodes to /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    marker: "# {mark} k3s cluster nodes"
+    block: |
+      {{ k3s_server_ip }} {{ k3s_server_hostname }}
+      {{ k3s_node_ip }} {{ k3s_node_name }}
+
+- name: Persist kernel modules for k3s
+  copy:
+    dest: /etc/modules-load.d/k3s.conf
+    content: |
+      br_netfilter
+      overlay
+
+- name: Load br_netfilter module
+  modprobe:
+    name: br_netfilter
+
+- name: Load overlay module
+  modprobe:
+    name: overlay
+
+- name: Set sysctl params for k3s
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/k3s.conf
+    reload: true
+  loop:
+    - { key: net.bridge.bridge-nf-call-iptables, value: "1" }
+    - { key: net.bridge.bridge-nf-call-ip6tables, value: "1" }
+    - { key: net.ipv4.ip_forward, value: "1" }
+
+- name: Check if k3s agent is already joined
+  stat:
+    path: /etc/rancher/k3s/agent-token
+  register: k3s_agent_token
+
+- name: Join node to k3s cluster
+  shell: |
+    curl -sfL https://get.k3s.io | \
+      K3S_URL=https://{{ k3s_server_ip }}:6443 \
+      K3S_TOKEN={{ k3s_token }} \
+      sh -s - agent \
+      --node-name {{ k3s_node_name }} \
+      --node-ip {{ k3s_node_ip }}
+  when: not k3s_agent_token.stat.exists
+  no_log: true

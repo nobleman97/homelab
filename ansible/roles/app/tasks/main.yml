@@ -1,0 +1,93 @@
+---
+- name: Install Python and build dependencies
+  apt:
+    name:
+      - python3
+      - python3-pip
+      - python3-venv
+      - libpq-dev
+      - gcc
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create better user
+  user:
+    name: better
+    system: true
+    shell: /usr/sbin/nologin
+    home: /opt/better
+    create_home: true
+
+- name: Create app directory
+  file:
+    path: /opt/better/app
+    state: directory
+    owner: better
+    group: better
+    mode: "0755"
+
+- name: Copy app source files
+  copy:
+    src: "{{ playbook_dir }}/../../projects/better/app/"
+    dest: /opt/better/app/
+    owner: better
+    group: better
+    mode: "0644"
+  notify:
+    - Restart demo-blue
+    - Restart demo-green
+
+- name: Create Python venv
+  command: python3 -m venv /opt/better/venv
+  args:
+    creates: /opt/better/venv/bin/activate
+
+- name: Install Python dependencies
+  pip:
+    requirements: /opt/better/app/requirements.txt
+    virtualenv: /opt/better/venv
+
+- name: Set ownership on /opt/better
+  file:
+    path: /opt/better
+    owner: better
+    group: better
+    recurse: true
+
+- name: Deploy demo-blue systemd unit
+  template:
+    src: demo-blue.service.j2
+    dest: /etc/systemd/system/demo-blue.service
+    mode: "0644"
+  notify: Restart demo-blue
+
+- name: Deploy demo-green systemd unit
+  template:
+    src: demo-green.service.j2
+    dest: /etc/systemd/system/demo-green.service
+    mode: "0644"
+  notify: Restart demo-green
+
+- name: Enable and start demo-blue
+  systemd:
+    name: demo-blue
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Enable demo-green (standby — not started by default)
+  systemd:
+    name: demo-green
+    enabled: true
+    state: stopped
+    daemon_reload: true
+
+- name: Allow app ports through ufw
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "8001"
+    - "8002"
