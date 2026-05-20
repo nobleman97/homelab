@@ -32,6 +32,22 @@ vms = {
       "k8s-worker-node-01"
     ]
   }
+  worker_node_2 = {
+    name        = "k8s-worker-node-02"
+    clone       = "debian-12-template-worker"
+    target_node = "david"
+    cores       = 3
+    memory      = 6144
+    disk_size   = "60G"
+    ip_address  = "192.168.100.27/24"
+    public_key_path = "~/.ssh/lab.pub"
+
+    tags        = [
+      "k8s_nodes",
+      "k8s_workers",
+      "k8s-worker-node-02"
+    ]
+  }
 
   # Extra VMs
   traffic_proxy = {
@@ -66,13 +82,13 @@ vms = {
       "app-server-01"
     ]
   }
-  postgres_01 = {
+  postgres_1 = {
     name        = "postgres-01"
     clone       = "debian-12-template-worker"
     target_node = "david"
     cores       = 2
-    memory      = 2048
-    disk_size   = "20G"
+    memory      = 4096
+    disk_size   = "60G"
     ip_address  = "192.168.100.33/24"
     public_key_path = "~/.ssh/lab.pub"
 
