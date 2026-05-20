@@ -1,0 +1,7 @@
+---
+- name: Prep and join k3s worker nodes
+  hosts: k8s_workers
+  become: true
+
+  roles:
+    - k3s-worker
