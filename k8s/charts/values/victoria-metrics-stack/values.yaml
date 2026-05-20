@@ -72,11 +72,3 @@ grafana:
       role_attribute_path: "contains(groups[*], 'grafana-admins') && 'Admin' || 'Viewer'"
       use_pkce: true
 
-  datasources:
-    datasources.yaml:
-      apiVersion: 1
-      datasources:
-        - name: VictoriaMetrics
-          type: prometheus
-          url: http://vmsingle-monitoring.monitoring.svc.cluster.local:8428
-          isDefault: true
