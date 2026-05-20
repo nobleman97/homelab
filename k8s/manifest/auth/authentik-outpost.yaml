@@ -14,6 +14,7 @@ spec:
     metadata:
       labels:
         app: authentik-outpost
+        outpost-deploy: manual
     spec:
       containers:
         - name: proxy
@@ -41,6 +42,7 @@ metadata:
 spec:
   selector:
     app: authentik-outpost
+    outpost-deploy: manual
   ports:
     - name: http
       port: 9000

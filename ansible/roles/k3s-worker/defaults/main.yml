@@ -1,0 +1,6 @@
+---
+k3s_server_ip: "192.168.100.25"
+k3s_server_hostname: "k3s-server"
+k3s_node_name: "{{ inventory_hostname }}"
+k3s_node_ip: "{{ ansible_host }}"
+# k3s_token must be supplied — no default (set in vars, vault, or --extra-vars)

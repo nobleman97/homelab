@@ -1,0 +1,122 @@
+---
+- name: Install PostgreSQL
+  apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Enable and start PostgreSQL
+  systemd:
+    name: postgresql
+    enabled: true
+    state: started
+
+- name: Enable pg_stat_statements in postgresql.conf
+  lineinfile:
+    path: /etc/postgresql/15/main/postgresql.conf
+    regexp: "^#?shared_preload_libraries"
+    line: "shared_preload_libraries = 'pg_stat_statements'"
+    backup: true
+  notify: Restart PostgreSQL
+
+- name: Set slow query log threshold
+  lineinfile:
+    path: /etc/postgresql/15/main/postgresql.conf
+    regexp: "^#?log_min_duration_statement"
+    line: "log_min_duration_statement = 500"
+    backup: true
+  notify: Restart PostgreSQL
+
+- name: Set listen_addresses to accept remote connections
+  lineinfile:
+    path: /etc/postgresql/15/main/postgresql.conf
+    regexp: "^#?listen_addresses"
+    line: "listen_addresses = '*'"
+    backup: true
+  notify: Restart PostgreSQL
+
+- name: Allow appuser connections from app-server-01 in pg_hba.conf
+  lineinfile:
+    path: /etc/postgresql/15/main/pg_hba.conf
+    line: "host    demo    appuser    192.168.100.32/32    md5"
+    insertafter: EOF
+  notify: Restart PostgreSQL
+
+- name: Allow PostgreSQL port from app-server only
+  ufw:
+    rule: allow
+    port: "5432"
+    proto: tcp
+    src: "192.168.100.32"
+
+- name: Allow SSH port through ufw
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: Download postgres_exporter
+  get_url:
+    url: "https://github.com/prometheus-community/postgres_exporter/releases/download/v0.15.0/postgres_exporter-0.15.0.linux-amd64.tar.gz"
+    dest: /tmp/postgres_exporter.tar.gz
+    mode: "0644"
+
+- name: Extract postgres_exporter
+  unarchive:
+    src: /tmp/postgres_exporter.tar.gz
+    dest: /tmp/
+    remote_src: true
+
+- name: Install postgres_exporter binary
+  copy:
+    src: /tmp/postgres_exporter-0.15.0.linux-amd64/postgres_exporter
+    dest: /usr/local/bin/postgres_exporter
+    mode: "0755"
+    remote_src: true
+
+- name: Create postgres_exporter systemd service
+  copy:
+    dest: /etc/systemd/system/postgres_exporter.service
+    content: |
+      [Unit]
+      Description=PostgreSQL Exporter
+      After=network.target postgresql.service
+
+      [Service]
+      Type=simple
+      User=postgres
+      Environment=DATA_SOURCE_NAME=postgresql:///postgres?host=/var/run/postgresql&sslmode=disable
+      ExecStart=/usr/local/bin/postgres_exporter
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Enable and start postgres_exporter
+  systemd:
+    name: postgres_exporter
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Allow postgres_exporter port through ufw
+  ufw:
+    rule: allow
+    port: "9187"
+    proto: tcp
+
+- name: Copy seed script to remote
+  copy:
+    src: "{{ playbook_dir }}/../../projects/better/app/seed.sql"
+    dest: /tmp/seed.sql
+    mode: "0644"
+
+- name: Run seed script (idempotent — skips if products table exists)
+  become_user: postgres
+  shell: |
+    psql -d demo -tAc "SELECT 1 FROM information_schema.tables WHERE table_name='products'" 2>/dev/null | grep -q 1 || psql -f /tmp/seed.sql
+  args:
+    executable: /bin/bash

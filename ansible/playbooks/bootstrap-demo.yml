@@ -1,0 +1,21 @@
+---
+- name: Bootstrap traffic-proxy-01
+  hosts: demo_proxy
+  become: true
+  roles:
+    - common
+    - nginx
+
+- name: Bootstrap app-server-01
+  hosts: demo_app
+  become: true
+  roles:
+    - common
+    - app
+
+- name: Bootstrap postgres-01
+  hosts: demo_db
+  become: true
+  roles:
+    - common
+    - postgres

@@ -1,0 +1,10 @@
+---
+- name: Restart demo-blue
+  systemd:
+    name: demo-blue
+    state: restarted
+
+- name: Restart demo-green
+  systemd:
+    name: demo-green
+    state: restarted

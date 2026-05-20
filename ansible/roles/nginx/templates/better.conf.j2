@@ -1,0 +1,76 @@
+log_format json_combined escape=json
+  '{'
+    '"time":"$time_iso8601",'
+    '"remote_addr":"$remote_addr",'
+    '"method":"$request_method",'
+    '"uri":"$request_uri",'
+    '"status":$status,'
+    '"bytes_sent":$bytes_sent,'
+    '"request_time":$request_time,'
+    '"upstream_addr":"$upstream_addr",'
+    '"upstream_response_time":"$upstream_response_time",'
+    '"http_user_agent":"$http_user_agent"'
+  '}';
+
+limit_req_zone $binary_remote_addr zone=api_limit:10m rate=30r/s;
+
+upstream app_backend {
+    server 192.168.100.32:8001;        # blue  (active)
+    server 192.168.100.32:8002 down;   # green (standby)
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    server_name better.osose.xyz;
+
+    access_log /var/log/nginx/better_access.log json_combined;
+    error_log  /var/log/nginx/better_error.log warn;
+
+    # Health check — bypass rate limit
+    location = /health {
+        proxy_pass         http://app_backend;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_connect_timeout 2s;
+        proxy_read_timeout    5s;
+    }
+
+    # API — rate limited, proxied to FastAPI
+    location /api/ {
+        limit_req zone=api_limit burst=50 nodelay;
+
+        proxy_pass         http://app_backend;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_next_upstream error timeout http_502 http_503;
+        proxy_connect_timeout 2s;
+        proxy_read_timeout    30s;
+
+        add_header X-Upstream $upstream_addr always;
+    }
+
+    # Frontend — static files
+    location / {
+        root  /var/www/better;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+        expires 1h;
+        add_header Cache-Control "public";
+    }
+
+    # Custom JSON error pages
+    error_page 429 @rate_limited;
+    error_page 502 503 @upstream_error;
+
+    location @rate_limited {
+        default_type application/json;
+        return 429 '{"error":"rate_limited","message":"Too many requests"}';
+    }
+
+    location @upstream_error {
+        default_type application/json;
+        return 502 '{"error":"upstream_unavailable","message":"Backend temporarily unavailable"}';
+    }
+}
