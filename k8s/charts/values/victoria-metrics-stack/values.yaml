@@ -1,0 +1,82 @@
+# Soft affinity: prefer the dedicated monitoring node (label: use=monitoring)
+# Using preferred rather than required so pods can still schedule if node is unavailable
+_affinity: &monitoring_affinity
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+            - key: use
+              operator: In
+              values:
+                - monitoring
+
+vmsingle:
+  enabled: true
+  spec:
+    retentionPeriod: "30d"
+    storage:
+      storageClassName: longhorn-retain
+      resources:
+        requests:
+          storage: 20Gi
+    affinity: *monitoring_affinity
+
+vmagent:
+  enabled: true
+  spec:
+    affinity: *monitoring_affinity
+
+vmalert:
+  enabled: true
+  spec:
+    affinity: *monitoring_affinity
+
+alertmanager:
+  enabled: true
+  spec:
+    # Full alertmanager config (including SMTP password) lives in this secret.
+    # Create it manually before syncing — see docs/monitoring-stack-plan.md.
+    configSecret: alertmanager-config
+    affinity: *monitoring_affinity
+
+grafana:
+  enabled: true
+
+  persistence:
+    enabled: true
+    storageClassName: longhorn-retain
+    size: 2Gi
+
+  affinity: *monitoring_affinity
+
+  ingress:
+    enabled: false
+
+  # GF_AUTH_GENERIC_OAUTH_CLIENT_ID and GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+  # are injected from this secret and auto-applied by Grafana's GF_* env var mapping.
+  envFromSecret: grafana-oidc-secret
+
+  grafana.ini:
+    server:
+      domain: grafana.osose.xyz
+      root_url: https://grafana.osose.xyz
+    auth.generic_oauth:
+      enabled: true
+      name: Authentik
+      allow_sign_up: true
+      scopes: openid profile email groups
+      auth_url: https://auth.osose.xyz/application/o/authorize/
+      token_url: https://auth.osose.xyz/application/o/token/
+      api_url: https://auth.osose.xyz/application/o/userinfo/
+      role_attribute_path: "contains(groups[*], 'grafana-admins') && 'Admin' || 'Viewer'"
+      use_pkce: true
+
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: VictoriaMetrics
+          type: prometheus
+          url: http://vmsingle-monitoring.monitoring.svc.cluster.local:8428
+          isDefault: true
