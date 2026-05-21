@@ -69,6 +69,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true   # required — dashboard ConfigMaps exceed client-side apply annotation size limit
 ```
 
 ---
@@ -96,10 +97,11 @@ This is applied to: `vmsingle.spec`, `vmagent.spec`, `vmalert.spec`, `alertmanag
 
 ### VMSingle — storage
 - 20Gi on `longhorn-retain` (persists across pod restarts)
-- 30-day retention
+- 15-day retention
 
 ### VMAgent
 - Enabled with defaults; scrapes nodes, pods, kube-state-metrics, cadvisor
+- VM exporters (outside the cluster) are scraped via `VMStaticScrape` CRDs — see **VM Scraping** section below
 
 ### VMAlert
 - Enabled; evaluates rules against VMSingle
@@ -117,6 +119,37 @@ This is applied to: `vmsingle.spec`, `vmagent.spec`, `vmalert.spec`, `alertmanag
 - Role mapping: members of `grafana-admins` Authentik group → Grafana `Admin`; everyone else → `Viewer`.
 - Persistence: 2Gi on `longhorn-retain`.
 - Ingress disabled in chart values (`ingress.enabled: false`); Cloudflare tunnel routes directly to the Grafana service — no Traefik IngressRoute needed since there is no ForwardAuth middleware to apply.
+- **Datasource**: do not set a custom `datasources` block in values — the chart automatically provisions the VictoriaMetrics datasource as default. Adding a second `isDefault: true` datasource causes Grafana to crash on startup with a provisioning error.
+
+---
+
+## VM Scraping (`k8s/manifest/monitoring/vm-static-scrapes.yaml`)
+
+The demo VMs run exporters that are outside the k8s cluster. VMAgent cannot discover them via ServiceMonitor (no k8s Service exists). Instead, `VMStaticScrape` CRDs define static target lists that VMAgent scrapes directly.
+
+### Exporters and targets
+
+| Exporter | VM | IP | Port |
+|---|---|---|---|
+| node_exporter | traffic-proxy-01, app-server-01, postgres-01 | .31, .32, .33 | 9100 |
+| nginx-prometheus-exporter | traffic-proxy-01 | 192.168.100.31 | 9113 |
+| postgres_exporter | postgres-01 | 192.168.100.33 | 9187 |
+
+All exporters were installed by their respective Ansible roles and are already running.
+
+### Flow
+
+```
+VM exporters → VMAgent (scrapes VMStaticScrape targets) → VMSingle → Grafana
+```
+
+### Manifest location
+
+`k8s/manifest/monitoring/vm-static-scrapes.yaml` — three `VMStaticScrape` resources, one per exporter type. Apply with:
+
+```bash
+kubectl apply -f k8s/manifest/monitoring/vm-static-scrapes.yaml
+```
 
 ---
 
@@ -187,6 +220,7 @@ Also create a `grafana-admins` group in Authentik and assign it to the grafana p
 
 ## Verification
 
+### Monitoring stack
 1. **ArgoCD** — `monitoring` Application appears healthy and synced at `argo.osose.xyz`
 2. **VMSingle** — pod running in `monitoring` namespace: `kubectl get pods -n monitoring`
 3. **Grafana** — `https://grafana.osose.xyz` redirects to Authentik login; after auth, lands in Grafana
@@ -195,4 +229,31 @@ Also create a `grafana-admins` group in Authentik and assign it to the grafana p
    kubectl port-forward svc/monitoring-alertmanager 9093:9093 -n monitoring
    # POST to localhost:9093/api/v1/alerts with a test payload
    ```
-5. **Metrics** — in Grafana, add VictoriaMetrics datasource (`http://monitoring-victoria-metrics-single-server:8428`) and confirm node metrics appear
+5. **Metrics** — in Grafana under **Connections → Data sources**, confirm the VictoriaMetrics datasource is auto-provisioned and healthy. If adding manually, use:
+   - Type: Prometheus
+   - URL: `http://vmsingle-monitoring-victoria-metrics-k8s-stack.monitoring.svc.cluster.local:8428`
+
+### Demo app end-to-end (verified 2026-05-20)
+
+```bash
+# Health
+curl -s https://better.osose.xyz/health
+# → {"status":"ok","version":"blue"}
+
+# Products — 1M rows, pagination and category filter
+curl -s "https://better.osose.xyz/api/products?limit=5"
+curl -s "https://better.osose.xyz/api/products?limit=5&category=electronics"
+
+# Place an order
+curl -s -X POST https://better.osose.xyz/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": 1, "quantity": 2}'
+
+# Recent orders
+curl -s https://better.osose.xyz/api/orders
+
+# Stats aggregates
+curl -s https://better.osose.xyz/api/stats
+```
+
+All endpoints returned 200 with correct data. Backend reported `version: blue`.
