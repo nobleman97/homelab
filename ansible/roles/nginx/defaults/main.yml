@@ -1,0 +1,1 @@
+active_version: blue   # change to green to cutover; re-run bootstrap-demo.yml --limit demo_proxy

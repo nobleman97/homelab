@@ -15,8 +15,8 @@ log_format json_combined escape=json
 limit_req_zone $binary_remote_addr zone=api_limit:10m rate=30r/s;
 
 upstream app_backend {
-    server 192.168.100.32:8001;        # blue  (active)
-    server 192.168.100.32:8002 down;   # green (standby)
+    server 192.168.100.32:8001{% if active_version != 'blue' %} down{% endif %};   # blue
+    server 192.168.100.32:8002{% if active_version != 'green' %} down{% endif %};  # green
     keepalive 32;
 }
 
