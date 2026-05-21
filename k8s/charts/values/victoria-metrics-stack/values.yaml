@@ -14,7 +14,7 @@ _affinity: &monitoring_affinity
 vmsingle:
   enabled: true
   spec:
-    retentionPeriod: "30d"
+    retentionPeriod: "15d"
     storage:
       storageClassName: longhorn-retain
       resources:
@@ -69,6 +69,7 @@ grafana:
       auth_url: https://auth.osose.xyz/application/o/authorize/
       token_url: https://auth.osose.xyz/application/o/token/
       api_url: https://auth.osose.xyz/application/o/userinfo/
+      signout_redirect_url: https://auth.osose.xyz/application/o/grafana/end-session/
       role_attribute_path: "contains(groups[*], 'grafana-admins') && 'Admin' || 'Viewer'"
       use_pkce: true
 
