@@ -76,11 +76,11 @@
     state: started
     daemon_reload: true
 
-- name: Enable demo-green (standby — not started by default)
+- name: Enable and start demo-green (standby — nginx keeps it down until cutover)
   systemd:
     name: demo-green
     enabled: true
-    state: stopped
+    state: started
     daemon_reload: true
 
 - name: Allow app ports through ufw
