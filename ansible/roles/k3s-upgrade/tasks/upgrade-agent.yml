@@ -1,0 +1,52 @@
+---
+- name: Check current k3s agent version
+  command: k3s --version
+  register: current_version
+  changed_when: false
+
+- name: Skip if already on target version
+  meta: end_host
+  when: k3s_version in current_version.stdout
+
+- name: Drain worker node
+  command: >
+    kubectl drain {{ k3s_node_name }}
+    --ignore-daemonsets
+    --delete-emptydir-data
+    --timeout={{ drain_timeout }}
+  delegate_to: localhost
+  become: false
+
+- name: Install target k3s version (agent)
+  shell: |
+    curl -sfL https://get.k3s.io | \
+      INSTALL_K3S_VERSION={{ k3s_version }} \
+      K3S_URL=https://{{ k3s_server_ip }}:6443 \
+      K3S_TOKEN={{ k3s_token }} \
+      sh -s - agent
+  args:
+    executable: /bin/bash
+  no_log: true
+
+- name: Wait for node to rejoin cluster
+  command: kubectl get node {{ k3s_node_name }}
+  delegate_to: localhost
+  become: false
+  register: node_status
+  retries: 15
+  delay: 10
+  until: "'Ready' in node_status.stdout"
+
+- name: Uncordon worker node
+  command: kubectl uncordon {{ k3s_node_name }}
+  delegate_to: localhost
+  become: false
+
+- name: Verify upgraded version
+  command: k3s --version
+  register: upgraded_version
+  changed_when: false
+
+- name: Show version after upgrade
+  debug:
+    msg: "{{ k3s_node_name }}: {{ upgraded_version.stdout }}"

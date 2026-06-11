@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tech-noexp
+  name: tech-noexp
+  namespace: landing-pages
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tech-noexp
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: tech-noexp
+    spec:
+      containers:
+      - image: 4568910/pdf_guides:latest
+        name: pdf-guides-bzg77
+        resources: {}
+status: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tech-noexp-svc
+  namespace: landing-pages
+  labels:
+    app: tech-noexp
+spec:
+  selector:
+    app: tech-noexp
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80

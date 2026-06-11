@@ -1,0 +1,47 @@
+---
+- name: Check current k3s server version
+  command: k3s --version
+  register: current_version
+  changed_when: false
+
+- name: Skip if already on target version
+  meta: end_host
+  when: k3s_version in current_version.stdout
+
+- name: Drain control plane
+  command: >
+    kubectl drain {{ inventory_hostname }}
+    --ignore-daemonsets
+    --delete-emptydir-data
+    --timeout={{ drain_timeout }}
+  delegate_to: localhost
+  become: false
+
+- name: Install target k3s version (server)
+  shell: |
+    curl -sfL https://get.k3s.io | \
+      INSTALL_K3S_VERSION={{ k3s_version }} \
+      sh -
+  args:
+    executable: /bin/bash
+
+- name: Wait for k3s to be ready
+  command: k3s kubectl get nodes
+  register: node_ready
+  retries: 15
+  delay: 10
+  until: node_ready.rc == 0
+
+- name: Uncordon control plane
+  command: kubectl uncordon {{ inventory_hostname }}
+  delegate_to: localhost
+  become: false
+
+- name: Verify upgraded version
+  command: k3s --version
+  register: upgraded_version
+  changed_when: false
+
+- name: Show version after upgrade
+  debug:
+    msg: "{{ inventory_hostname }}: {{ upgraded_version.stdout }}"

@@ -1,0 +1,13 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMAlertmanagerConfig
+metadata:
+  name: custom-routes
+  namespace: monitoring
+spec:
+  route:
+    receiver: "null"
+    matchers:
+      - alertname = RecordingRulesNoData
+      - group = kube-scheduler.rules
+  receivers:
+    - name: "null"

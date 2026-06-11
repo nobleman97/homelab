@@ -1,0 +1,24 @@
+---
+# Upgrades k3s across the cluster in the correct order: control plane first, then
+# workers one at a time (serial: 1) to maintain workload availability.
+#
+# Usage:
+#   ansible-playbook playbooks/upgrade-k3s.yml -e k3s_version=v1.35.4+k3s1 -e k3s_token=<token>
+#
+# To upgrade only workers:
+#   ansible-playbook playbooks/upgrade-k3s.yml -e k3s_version=v1.35.4+k3s1 -e k3s_token=<token> --limit k8s_workers
+
+- name: Upgrade k3s control plane
+  hosts: k8s_control_plane
+  become: true
+  gather_facts: false
+  roles:
+    - k3s-upgrade
+
+- name: Upgrade k3s workers
+  hosts: k8s_workers
+  become: true
+  gather_facts: false
+  serial: 1
+  roles:
+    - k3s-upgrade

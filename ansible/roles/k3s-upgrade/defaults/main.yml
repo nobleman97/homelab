@@ -1,0 +1,4 @@
+---
+k3s_version: ""  # required — e.g. v1.35.4+k3s1
+k3s_server_ip: "192.168.100.25"
+drain_timeout: "120s"
