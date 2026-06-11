@@ -15,31 +15,31 @@ spec:
         job: node-exporter
 
 ---
-apiVersion: operator.victoriametrics.com/v1beta1
-kind: VMStaticScrape
-metadata:
-  name: nginx-exporter
-  namespace: monitoring
-spec:
-  jobName: nginx-exporter
-  targetEndpoints:
-    - targets:
-        - "192.168.100.31:9113"
-      labels:
-        job: nginx-exporter
-        instance: traffic-proxy-01
+# apiVersion: operator.victoriametrics.com/v1beta1
+# kind: VMStaticScrape
+# metadata:
+#   name: nginx-exporter
+#   namespace: monitoring
+# spec:
+#   jobName: nginx-exporter
+#   targetEndpoints:
+#     - targets:
+#         - "192.168.100.31:9113"
+#       labels:
+#         job: nginx-exporter
+#         instance: traffic-proxy-01
 
----
-apiVersion: operator.victoriametrics.com/v1beta1
-kind: VMStaticScrape
-metadata:
-  name: postgres-exporter
-  namespace: monitoring
-spec:
-  jobName: postgres-exporter
-  targetEndpoints:
-    - targets:
-        - "192.168.100.33:9187"
-      labels:
-        job: postgres-exporter
-        instance: postgres-01
+# ---
+# apiVersion: operator.victoriametrics.com/v1beta1
+# kind: VMStaticScrape
+# metadata:
+#   name: postgres-exporter
+#   namespace: monitoring
+# spec:
+#   jobName: postgres-exporter
+#   targetEndpoints:
+#     - targets:
+#         - "192.168.100.33:9187"
+#       labels:
+#         job: postgres-exporter
+#         instance: postgres-01

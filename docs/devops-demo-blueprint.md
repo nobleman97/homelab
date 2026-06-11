@@ -459,8 +459,9 @@ ssh app-server-01 "pkill -f 'uvicorn.*8001'"
 
 ### Scenario 2 — Slow Query Injection
 ```bash
-# Run a query that holds a lock for 10 seconds
-ssh app-server-01 "psql -c \"SELECT pg_sleep(10), count(*) FROM products;\""
+# SSH to postgres-01 (PostgreSQL runs there, not on app-server-01)
+ssh -i ~/.ssh/lab debian@192.168.100.33
+sudo -u postgres psql -d demo -c "SELECT pg_sleep(10), count(*) FROM products;"
 ```
 **Observable:** `SlowQuery` alert fires in Alertmanager → Grafana DB dashboard shows spike → runbook says use `pg_cancel_backend()` or `pg_terminate_backend()`.
 

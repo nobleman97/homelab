@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" font-family="'JetBrains Mono', 'Fira Mono', 'Courier New', monospace">
+
+  <!-- Background -->
+  <rect width="900" height="540" fill="#0f1117"/>
+
+  <!-- ─────────────────────────────────────────────────
+       SECTION LABELS
+  ───────────────────────────────────────────────── -->
+  <text x="225" y="36" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600" letter-spacing="2">FORWARD PROXY</text>
+  <text x="675" y="36" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600" letter-spacing="2">REVERSE PROXY</text>
+
+  <!-- Divider -->
+  <line x1="450" y1="20" x2="450" y2="520" stroke="#1e293b" stroke-width="2" stroke-dasharray="6,4"/>
+
+  <!-- ─────────────────────────────────────────────────
+       SHARED STYLE HELPERS (reused via <use>)
+  ───────────────────────────────────────────────── -->
+
+  <!-- ══════════════════════════════════════════════
+       LEFT SIDE — FORWARD PROXY
+  ══════════════════════════════════════════════ -->
+
+  <!-- Client A -->
+  <rect x="28" y="160" width="88" height="44" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="72" y="177" text-anchor="middle" fill="#e2e8f0" font-size="11">Client A</text>
+  <text x="72" y="192" text-anchor="middle" fill="#64748b" font-size="10">192.168.x.x</text>
+
+  <!-- Client B -->
+  <rect x="28" y="228" width="88" height="44" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="72" y="245" text-anchor="middle" fill="#e2e8f0" font-size="11">Client B</text>
+  <text x="72" y="260" text-anchor="middle" fill="#64748b" font-size="10">192.168.x.x</text>
+
+  <!-- Client C -->
+  <rect x="28" y="296" width="88" height="44" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="72" y="313" text-anchor="middle" fill="#e2e8f0" font-size="11">Client C</text>
+  <text x="72" y="328" text-anchor="middle" fill="#64748b" font-size="10">192.168.x.x</text>
+
+  <!-- Arrows: clients → proxy -->
+  <line x1="116" y1="182" x2="162" y2="220" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+  <line x1="116" y1="250" x2="162" y2="250" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+  <line x1="116" y1="318" x2="162" y2="280" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+  <!-- Forward Proxy box -->
+  <rect x="162" y="210" width="110" height="80" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.8"/>
+  <text x="217" y="244" text-anchor="middle" fill="#93c5fd" font-size="12" font-weight="600">Forward</text>
+  <text x="217" y="260" text-anchor="middle" fill="#93c5fd" font-size="12" font-weight="600">Proxy</text>
+  <text x="217" y="279" text-anchor="middle" fill="#3b82f6" font-size="10">203.0.113.5</text>
+
+  <!-- Arrow: proxy → internet -->
+  <line x1="272" y1="250" x2="322" y2="250" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr-blue)"/>
+
+  <!-- Internet cloud (left) -->
+  <ellipse cx="360" cy="250" rx="38" ry="28" fill="#0f2233" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="360" y="246" text-anchor="middle" fill="#60a5fa" font-size="11">Inter-</text>
+  <text x="360" y="260" text-anchor="middle" fill="#60a5fa" font-size="11">net</text>
+
+
+  <!-- annotation: hides client IPs -->
+  <text x="217" y="160" text-anchor="middle" fill="#64748b" font-size="10">hides client identities</text>
+  <text x="217" y="173" text-anchor="middle" fill="#64748b" font-size="10">from the outside world</text>
+  <line x1="217" y1="177" x2="217" y2="210" stroke="#334155" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- annotation: single public IP -->
+  <text x="300" y="235" text-anchor="middle" fill="#3b82f6" font-size="9">single public IP</text>
+
+  <!-- annotation bottom -->
+  <text x="217" y="330" text-anchor="middle" fill="#475569" font-size="10">sits in front of</text>
+  <text x="217" y="343" text-anchor="middle" fill="#475569" font-size="10">CLIENTS</text>
+
+  <!-- Example use-cases -->
+  <rect x="28" y="390" width="370" height="110" rx="6" fill="#0d1b2a" stroke="#1e293b" stroke-width="1.2"/>
+  <text x="42" y="410" fill="#64748b" font-size="10" font-weight="600">USE CASES</text>
+  <text x="42" y="428" fill="#475569" font-size="10">·  Corporate internet filtering / content policy</text>
+  <text x="42" y="444" fill="#475569" font-size="10">·  Bypass geo-restrictions (VPN-like)</text>
+  <text x="42" y="460" fill="#475569" font-size="10">·  Anonymise outbound traffic</text>
+  <text x="42" y="476" fill="#475569" font-size="10">·  Cache outbound requests to save bandwidth</text>
+  <text x="42" y="492" fill="#475569" font-size="10">·  Squid, Privoxy, corporate proxies</text>
+
+  <!-- ══════════════════════════════════════════════
+       RIGHT SIDE — REVERSE PROXY
+  ══════════════════════════════════════════════ -->
+
+  <!-- Internet cloud (right) -->
+  <ellipse cx="510" cy="250" rx="38" ry="28" fill="#0f2233" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="510" y="246" text-anchor="middle" fill="#60a5fa" font-size="11">Inter-</text>
+  <text x="510" y="260" text-anchor="middle" fill="#60a5fa" font-size="11">net</text>
+
+  <!-- Arrow: internet → reverse proxy -->
+  <line x1="548" y1="250" x2="598" y2="250" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr-blue)"/>
+
+  <!-- Reverse Proxy box -->
+  <rect x="598" y="210" width="110" height="80" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.8"/>
+  <text x="653" y="244" text-anchor="middle" fill="#93c5fd" font-size="12" font-weight="600">Reverse</text>
+  <text x="653" y="260" text-anchor="middle" fill="#93c5fd" font-size="12" font-weight="600">Proxy</text>
+  <text x="653" y="279" text-anchor="middle" fill="#3b82f6" font-size="10">203.0.113.9</text>
+
+  <!-- Arrows: reverse proxy → backends -->
+  <line x1="708" y1="232" x2="754" y2="182" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+  <line x1="708" y1="250" x2="754" y2="250" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+  <line x1="708" y1="268" x2="754" y2="318" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+  <!-- Backend A -->
+  <rect x="754" y="160" width="118" height="44" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="813" y="177" text-anchor="middle" fill="#e2e8f0" font-size="11">Backend A</text>
+  <text x="813" y="192" text-anchor="middle" fill="#64748b" font-size="10">10.0.0.1:8001</text>
+
+  <!-- Backend B -->
+  <rect x="754" y="228" width="118" height="44" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="813" y="245" text-anchor="middle" fill="#e2e8f0" font-size="11">Backend B</text>
+  <text x="813" y="260" text-anchor="middle" fill="#64748b" font-size="10">10.0.0.2:8001</text>
+
+  <!-- Backend C -->
+  <rect x="754" y="296" width="118" height="44" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="813" y="313" text-anchor="middle" fill="#e2e8f0" font-size="11">Backend C</text>
+  <text x="813" y="328" text-anchor="middle" fill="#64748b" font-size="10">10.0.0.3:8001</text>
+
+  <!-- annotation: hides backend topology -->
+  <text x="813" y="148" text-anchor="middle" fill="#64748b" font-size="10">hides backend topology</text>
+  <text x="813" y="161" text-anchor="middle" fill="#64748b" font-size="10">from the outside world</text>
+  <line x1="813" y1="165" x2="813" y2="160" stroke="#334155" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <!-- annotation: single public IP -->
+  <text x="570" y="235" text-anchor="middle" fill="#3b82f6" font-size="9">single public IP</text>
+
+  <!-- annotation bottom -->
+  <text x="653" y="330" text-anchor="middle" fill="#475569" font-size="10">sits in front of</text>
+  <text x="653" y="343" text-anchor="middle" fill="#475569" font-size="10">SERVERS</text>
+
+  <!-- Example use-cases -->
+  <rect x="502" y="390" width="370" height="110" rx="6" fill="#0d1b2a" stroke="#1e293b" stroke-width="1.2"/>
+  <text x="516" y="410" fill="#64748b" font-size="10" font-weight="600">USE CASES</text>
+  <text x="516" y="428" fill="#475569" font-size="10">·  TLS termination (one cert for many backends)</text>
+  <text x="516" y="444" fill="#475569" font-size="10">·  Load balancing across instances</text>
+  <text x="516" y="460" fill="#475569" font-size="10">·  Rate limiting and WAF</text>
+  <text x="516" y="476" fill="#475569" font-size="10">·  Cache and compress responses</text>
+  <text x="516" y="492" fill="#475569" font-size="10">·  NGINX, Traefik, Caddy, HAProxy, Cloudflare</text>
+
+  <!-- ─────────────────────────────────────────────────
+       KEY DISTINCTION banner
+  ───────────────────────────────────────────────── -->
+  <rect x="160" y="64" width="580" height="56" rx="8" fill="#0d1b2a" stroke="#1e3a5f" stroke-width="1.5"/>
+  <text x="450" y="87" text-anchor="middle" fill="#94a3b8" font-size="12">
+    A <tspan fill="#93c5fd" font-weight="600">forward proxy</tspan> acts on behalf of <tspan fill="#93c5fd" font-weight="600">clients</tspan> — the server sees one IP.
+  </text>
+  <text x="450" y="107" text-anchor="middle" fill="#94a3b8" font-size="12">
+    A <tspan fill="#93c5fd" font-weight="600">reverse proxy</tspan> acts on behalf of <tspan fill="#93c5fd" font-weight="600">servers</tspan> — the client sees one IP.
+  </text>
+
+  <!-- ─────────────────────────────────────────────────
+       ARROWHEAD MARKERS
+  ───────────────────────────────────────────────── -->
+  <defs>
+    <marker id="arr-gray" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#475569"/>
+    </marker>
+    <marker id="arr-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#3b82f6"/>
+    </marker>
+  </defs>
+
+</svg>

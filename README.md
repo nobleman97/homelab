@@ -100,3 +100,4 @@ Operational runbooks live in [`docs/`](docs/):
 - [`db-query-troubleshooting.md`](docs/db-query-troubleshooting.md) — PostgreSQL slow query analysis with `pg_stat_statements` and `EXPLAIN ANALYZE`
 - [`monitoring-stack-plan.md`](docs/monitoring-stack-plan.md) — VictoriaMetrics + Grafana + Alertmanager deployment reference
 - [`trilium-notes.md`](docs/trilium-notes.md) — Trilium deployment and Authentik integration guide
+- [`remove-vm.md`](docs/remove-vm.md) — safe VM decommission procedure (Terraform + monitoring cleanup)

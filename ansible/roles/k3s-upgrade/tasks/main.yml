@@ -1,0 +1,13 @@
+---
+- name: Assert k3s_version is set
+  assert:
+    that: k3s_version | length > 0
+    fail_msg: "k3s_version must be set — e.g. -e k3s_version=v1.35.4+k3s1"
+
+- name: Upgrade control plane
+  import_tasks: upgrade-server.yml
+  when: inventory_hostname in groups['k8s_control_plane']
+
+- name: Upgrade workers
+  import_tasks: upgrade-agent.yml
+  when: inventory_hostname in groups['k8s_workers']
