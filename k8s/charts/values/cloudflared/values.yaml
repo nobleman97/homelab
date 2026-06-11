@@ -19,7 +19,7 @@ ingress:
   - hostname: grafana.osose.xyz
     service: http://monitoring-grafana.monitoring.svc.cluster.local:80
   - hostname: techguide.osose.xyz
-    service: http://service/tech-noexp-svc.landing-pages.svc.cluster.local:80
+    service: http://tech-noexp-svc.landing-pages.svc.cluster.local:80
 
   - service: http_status:404
 
