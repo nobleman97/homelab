@@ -38,7 +38,7 @@ vms = {
     target_node = "david"
     cores       = 3
     memory      = 6144
-    disk_size   = "60G"
+    disk_size   = "90G"
     ip_address  = "192.168.100.27/24"
     public_key_path = "~/.ssh/lab.pub"
 
