@@ -8,7 +8,7 @@ server:
   persistentVolume:
     enabled: true
     storageClassName: longhorn-retain
-    size: 20Gi
+    size: 10Gi
   # Soft affinity: prefer the dedicated monitoring node (label: use=monitoring).
   affinity:
     nodeAffinity:

@@ -4,11 +4,12 @@ metadata:
   name: mariadb-pvc
   namespace: wordpress
 spec:
-  accessModes: [ReadWriteMany]
+  accessModes: [ReadWriteOnce]
   resources:
     requests:
-      storage: 10Gi
+      storage: 3Gi
   storageClassName: longhorn-retain
+  volumeName: smaller-mariadb-pv
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -16,9 +17,10 @@ metadata:
   name: wordpress-pvc
   namespace: wordpress
 spec:
-  accessModes: [ReadWriteMany]
+  accessModes: [ReadWriteOnce]
   resources:
     requests:
-      storage: 20Gi
-  storageClassName: longhorn-retain
+      storage: 6Gi
+  storageClassName: longhorn-static
+  volumeName: smaller-wordpress-pv
 
