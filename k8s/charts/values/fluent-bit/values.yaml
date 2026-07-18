@@ -38,7 +38,7 @@ config:
         Match            *
         host             victoria-logs-victoria-logs-single-server.monitoring.svc.cluster.local
         port             9428
-        uri              /insert/jsonline?_stream_fields=stream,kubernetes_namespace_name,kubernetes_pod_name,kubernetes_container_name&_msg_field=log,msg&_time_field=date
+        uri              /insert/jsonline?_stream_fields=stream,kubernetes_namespace_name,kubernetes_pod_name,kubernetes_container_name&_msg_field=log,msg,event&_time_field=date
         format           json_lines
         json_date_format iso8601
         compress         gzip
