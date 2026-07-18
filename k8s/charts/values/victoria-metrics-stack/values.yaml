@@ -57,6 +57,18 @@ grafana:
   # are injected from this secret and auto-applied by Grafana's GF_* env var mapping.
   envFromSecret: grafana-oidc-secret
 
+  # VictoriaLogs datasource — logs are queried only through Grafana (see
+  # docs/log-collection-plan.md). isDefault MUST stay false: a second default
+  # datasource crashes Grafana on startup.
+  plugins:
+    - victoriametrics-logs-datasource
+  additionalDataSources:
+    - name: VictoriaLogs
+      type: victoriametrics-logs-datasource
+      access: proxy
+      url: http://victoria-logs-victoria-logs-single-server.monitoring.svc.cluster.local:9428
+      isDefault: false
+
   grafana.ini:
     server:
       domain: grafana.osose.xyz

@@ -1,0 +1,27 @@
+# VictoriaLogs single-node store (log aggregation).
+# See docs/log-collection-plan.md. Fluent Bit (deployed separately) ships logs here;
+# Grafana reads them via the victoriametrics-logs-datasource plugin.
+
+server:
+  # Retention: 7 days (units: h/d/w/y; bare number = months).
+  retentionPeriod: 7d
+  persistentVolume:
+    enabled: true
+    storageClassName: longhorn-retain
+    size: 20Gi
+  # Soft affinity: prefer the dedicated monitoring node (label: use=monitoring).
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: use
+                operator: In
+                values:
+                  - monitoring
+
+# The chart bundles Vector as an optional collector — we use Fluent Bit instead
+# (deployed via k8s/argo-apps/fluent-bit.yaml).
+vector:
+  enabled: false

@@ -1,0 +1,44 @@
+# Fluent Bit log collector (DaemonSet) — ships container logs to VictoriaLogs.
+# See docs/log-collection-plan.md.
+
+# Run on every node, including the control-plane, so all node logs are collected.
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+config:
+  # Tail container logs, excluding noisy system namespaces at the input (cheapest:
+  # those files are never read). longhorn-system is intentionally kept.
+  inputs: |
+    [INPUT]
+        Name              tail
+        Path              /var/log/containers/*.log
+        Exclude_Path      /var/log/containers/*_kube-system_*.log,/var/log/containers/*_kube-public_*.log,/var/log/containers/*_kube-node-lease_*.log
+        multiline.parser  docker, cri
+        Tag               kube.*
+        Mem_Buf_Limit     16MB
+        Skip_Long_Lines   On
+
+  # Enrich each record with Kubernetes metadata (namespace, pod, container, labels).
+  filters: |
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Merge_Log           On
+        Keep_Log            Off
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude On
+
+  # VictoriaLogs http output — per docs.victoriametrics.com/victorialogs/data-ingestion/fluentbit.
+  # Stream fields come from the kubernetes filter metadata added above.
+  outputs: |
+    [OUTPUT]
+        Name             http
+        Match            *
+        host             victoria-logs-victoria-logs-single-server.monitoring.svc.cluster.local
+        port             9428
+        uri              /insert/jsonline?_stream_fields=stream,kubernetes_namespace_name,kubernetes_pod_name,kubernetes_container_name&_msg_field=log&_time_field=date
+        format           json_lines
+        json_date_format iso8601
+        compress         gzip
