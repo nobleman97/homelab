@@ -43,6 +43,9 @@ alertmanager:
 grafana:
   enabled: true
 
+  deploymentStrategy:
+    type: Recreate
+
   persistence:
     enabled: true
     storageClassName: longhorn-retain
