@@ -19,8 +19,17 @@ spec:
           barmanObjectName: master-db-store  # restore from this backup
 
   storage:
-    size: 10Gi
+    size: 20Gi
     storageClass: longhorn-retain
+
+  # Applies to the `postgres` container only; the barman-cloud sidecar is
+  # configured separately on the ObjectStore below.
+  # Requests sized from 15d of this cluster's own metrics (p95 569Mi, peak 604Mi).
+  # No limits by design: a memory limit here means OOMKill, not backpressure.
+  resources:
+    requests:
+      cpu: 200m
+      memory: 640Mi
 
   plugins:
     - name: barman-cloud.cloudnative-pg.io
@@ -58,6 +67,16 @@ metadata:
   namespace: database
 spec:
   retentionPolicy: "14d"
+  # The `plugin-barman-cloud` sidecar in the instance pod is injected by the
+  # plugin, so its resources can only be set here — not from Cluster.spec.resources.
+  # The plugin reads them from the ObjectStore named by the *archiver* plugin
+  # parameter (this one), not from the recovery ObjectStore above.
+  # Requests sized from 15d of metrics (p95 366Mi, peak 590Mi during WAL bursts).
+  instanceSidecarConfiguration:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 384Mi
   configuration:
     destinationPath: "s3://objectstore-199174511003-us-east-1-an/v2"
     s3Credentials:

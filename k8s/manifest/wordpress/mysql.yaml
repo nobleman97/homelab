@@ -22,6 +22,11 @@ spec:
                 name: mariadb-secret
           ports:
             - containerPort: 3306
+          resources:
+            # Requests sized from 15d of metrics (p95 163Mi, peak 164Mi).
+            requests:
+              cpu: 100m
+              memory: 192Mi
           volumeMounts:
             - name: db-data
               mountPath: /var/lib/mysql

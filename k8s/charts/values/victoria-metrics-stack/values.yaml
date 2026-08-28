@@ -11,10 +11,18 @@ _affinity: &monitoring_affinity
               values:
                 - monitoring
 
+# Resource requests below are sized from 15 days of this cluster's own
+# VictoriaMetrics history: p95 usage plus modest headroom. Requests only, by
+# design — memory limits risk OOMKills and CPU limits cause throttling.
 vmsingle:
   enabled: true
   spec:
     retentionPeriod: "15d"
+    # Observed p95 949Mi / peak 968Mi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 1Gi
     storage:
       storageClassName: longhorn-retain
       resources:
@@ -25,11 +33,21 @@ vmsingle:
 vmagent:
   enabled: true
   spec:
+    # Observed p95 133Mi / peak 149Mi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 160Mi
     affinity: *monitoring_affinity
 
 vmalert:
   enabled: true
   spec:
+    # Observed peak ~81Mi
+    resources:
+      requests:
+        cpu: 25m
+        memory: 96Mi
     affinity: *monitoring_affinity
 
 alertmanager:
@@ -38,6 +56,11 @@ alertmanager:
     # Full alertmanager config (including SMTP password) lives in this secret.
     # Create it manually before syncing — see docs/monitoring-stack-plan.md.
     configSecret: alertmanager-config
+    # Idles well under 96Mi; matched to vmalert for simplicity.
+    resources:
+      requests:
+        cpu: 25m
+        memory: 96Mi
     affinity: *monitoring_affinity
 
 grafana:
@@ -45,6 +68,21 @@ grafana:
 
   deploymentStrategy:
     type: Recreate
+
+  # Observed p95 405Mi / peak 432Mi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 448Mi
+
+  # This chart exposes a SINGLE shared resources block for every Grafana sidecar
+  # container — there is no sidecar.dashboards.resources / sidecar.datasources.resources.
+  # sc-dashboard sits at ~104Mi and sc-datasources at ~93Mi, so 128Mi covers both.
+  sidecar:
+    resources:
+      requests:
+        cpu: 20m
+        memory: 128Mi
 
   persistence:
     enabled: true

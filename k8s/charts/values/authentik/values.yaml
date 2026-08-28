@@ -31,4 +31,22 @@ server:
     # -- enable an ingress resource for the authentik server
     enabled: false
 
+  # -- Resource requests for the authentik server. Sized from 15 days of this
+  # cluster's own metrics: p95 715Mi, peak 832Mi. Requests only, no limits.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 768Mi
+
+worker:
+  # -- Resource requests for the authentik worker. Its memory is bursty rather
+  # than leaking: the hourly trace cycles ~760Mi -> 2032Mi -> 1308Mi -> 2229Mi
+  # while processing tasks, then falls back. The request is deliberately set at
+  # the p95 (1536Mi), BELOW the 2288Mi peak — it reserves the steady-state need
+  # and lets the bursts borrow spare node capacity. Requests only, no limits.
+  resources:
+    requests:
+      cpu: 200m
+      memory: 1536Mi
+
 # helm upgrade  --install authentik goauthentik/authentik --version 2026.2.3 -f values.yaml -n apps  

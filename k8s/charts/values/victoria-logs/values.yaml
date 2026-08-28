@@ -9,6 +9,13 @@ server:
     enabled: true
     storageClassName: longhorn-retain
     size: 10Gi
+  # Sized from 15 days of this cluster's own VictoriaMetrics history:
+  # p95 557Mi / peak 723Mi. Requests only, by design — memory limits risk
+  # OOMKills and CPU limits cause throttling.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 640Mi
   # Soft affinity: prefer the dedicated monitoring node (label: use=monitoring).
   affinity:
     nodeAffinity:

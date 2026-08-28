@@ -18,6 +18,11 @@ spec:
           image: redis:7-alpine
           ports:
             - containerPort: 6379
+          resources:
+            # Cache-only usage; observed footprint is small.
+            requests:
+              cpu: 25m
+              memory: 96Mi
 ---
 apiVersion: v1
 kind: Service

@@ -48,9 +48,10 @@ spec:
             - name: WORDPRESS_TABLE_PREFIX
               value: "wpz7_"
           resources:
+            # Requests sized from 15d of metrics (p95 339Mi, peak 345Mi).
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: 50m
+              memory: 384Mi
             limits:
               cpu: 500m
               memory: 512Mi

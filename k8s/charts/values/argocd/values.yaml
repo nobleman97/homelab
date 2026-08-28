@@ -22,7 +22,55 @@ configs:
       g, argocd-admins, role:admin
     policy.default: role:readonly
     
+# Resource requests below are sized from 15 days of this cluster's own
+# VictoriaMetrics history. Requests only — no limits are set in this phase.
+
+controller:
+  # application-controller (StatefulSet): p95 513Mi, peak 602Mi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+
+repoServer:
+  # p95 and peak both 121Mi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 192Mi
+
+# Minor components: nominal requests so the scheduler accounts for them.
+dex:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 96Mi
+
+redis:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 96Mi
+
+notifications:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 96Mi
+
+applicationSet:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 96Mi
+
 server:
+  # p95 and peak both 90Mi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
   ingress:
     enabled: false  # Cloudlare --> Tunnel --> ArgoCD
     ingressClassName: traefik
