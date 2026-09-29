@@ -1,0 +1,10 @@
+[Unit]
+Description=Recover a wedged e1000e NIC
+Documentation=file:///root/docs/worker-2-nic-failure.md
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/nic-watchdog.sh
+# Interface, bridge and thresholds can be overridden here, e.g.
+# Environment=IFACE=nic0 BRIDGE=vmbr0 ESCALATE=0
