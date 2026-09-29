@@ -39,6 +39,7 @@ CLAUDE.md
 terraform.rc
 **/env
 **venv
+**/monitoring/datadog-agent.yaml
 
 # Ansible
 *.retry
