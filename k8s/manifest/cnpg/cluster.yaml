@@ -7,6 +7,29 @@ spec:
   instances: 1          # 1 primary + 2 replicas; use 1 for dev
   # primaryUpdateStrategy: unsupervised
 
+  # Prefer to keep the instance off k3s-worker-2. Its Proxmox host `david` wedges
+  # its NIC and loses all guest networking until power-cycled — see
+  # docs/worker-2-nic-failure.md. With instances: 1 there is no failover, and
+  # Longhorn's node-down-pod-deletion-policy is do-nothing, so a pod on a dead
+  # node stays Terminating and holds the volume until the node returns.
+  #
+  # Preferred, not required: k3s-server is cordoned and tainted `reserved`, so a
+  # hard pin would leave k3s-worker-1 as the only eligible node. This way the
+  # database falls back to worker-2 rather than staying pending.
+  #
+  # Note `IgnoredDuringExecution`: this does not evict a pod already running on
+  # worker-2. Deleting the instance pod is what actually moves it.
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values:
+                  - k3s-worker-2
+
   bootstrap:
     recovery:
       source: master-db-backup # use backup from object store to initialize cluster

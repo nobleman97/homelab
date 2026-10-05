@@ -1,4 +1,6 @@
 ---
+- import_playbook: install-deps.yml
+
 - name: Prep and join k3s worker nodes
   hosts: k8s_workers
   become: true

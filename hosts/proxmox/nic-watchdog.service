@@ -1,0 +1,15 @@
+[Unit]
+Description=Recover a wedged e1000e NIC
+Documentation=file:///root/docs/worker-2-nic-failure.md
+After=network.target
+
+[Service]
+Type=oneshot
+# Without this, systemd logs "Starting.../Finished..." on every tick -- at a
+# 1-minute interval that is ~2900 lines/day of pure boilerplate. On `proxmox`
+# an equivalent 30s timer produced 56% of the entire journal. The script's own
+# messages go out at daemon.warning, so real events still appear.
+LogLevelMax=warning
+ExecStart=/usr/local/sbin/nic-watchdog.sh
+# Interface, bridge and thresholds can be overridden here, e.g.
+# Environment=IFACE=nic0 BRIDGE=vmbr0 ESCALATE=0

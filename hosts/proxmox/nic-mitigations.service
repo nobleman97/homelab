@@ -1,0 +1,20 @@
+[Unit]
+Description=Apply Intel I219 e1000e mitigations
+Documentation=https://github.com/nobleman97/homelab/blob/main/docs/worker-2-nic-failure.md
+# Runs once networking has brought nic0 up. EEE and the offloads can be toggled
+# on a live interface, so applying them after the link is up is fine -- the hang
+# takes minutes to hours to develop, not seconds.
+After=networking.service
+Wants=networking.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# `-` prefix: a missing interface must not fail the boot.
+# EEE is the most common I219 hang trigger; the offloads are the next suspects.
+# If the interface is not nic0, change it in both lines.
+ExecStart=-/sbin/ethtool --set-eee nic0 eee off
+ExecStart=-/sbin/ethtool -K nic0 tso off gso off gro off
+
+[Install]
+WantedBy=multi-user.target

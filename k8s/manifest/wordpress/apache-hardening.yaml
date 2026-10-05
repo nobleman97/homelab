@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wordpress-apache-hardening
+  namespace: wordpress
+data:
+  # Mounted into /etc/apache2/conf-enabled/ so it applies before PHP runs.
+  # xmlrpc.php was hammered by credential brute force during the Oct 2026 compromise.
+  block-xmlrpc.conf: |
+    <Files "xmlrpc.php">
+      Require all denied
+    </Files>
+  # uploads/ is writable by WordPress; never execute or serve scripts from it.
+  # php_admin_flag can't be re-enabled from a .htaccess dropped in uploads/.
+  block-uploads-php.conf: |
+    <Directory "/var/www/html/wp-content/uploads">
+      php_admin_flag engine off
+      <FilesMatch "\.(?i:php\d*|phtml|pht|phar|phps)$">
+        Require all denied
+      </FilesMatch>
+    </Directory>
