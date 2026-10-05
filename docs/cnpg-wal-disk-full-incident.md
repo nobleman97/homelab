@@ -248,6 +248,10 @@ A scan of all 164 `metadata.json` files found exactly one corrupt; all other `pa
 
 ### 1b. `k3s-worker-2` is unstable — the likely common cause
 
+> **[SUPERSEDED 2026-08-28]** The root cause is now known: a physically failing NIC on the
+> Proxmox host `david`, which hosts this VM. The version-skew hypothesis below is **incidental,
+> not causal**, and there is **no disk fault**. See [`worker-2-nic-failure.md`](worker-2-nic-failure.md).
+
 Both VictoriaMetrics defects trace to an ungraceful shutdown of this node, and it failed again *during* this remediation:
 
 | Event | Time |

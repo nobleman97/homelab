@@ -41,6 +41,9 @@ repoServer:
 
 # Minor components: nominal requests so the scheduler accounts for them.
 dex:
+  # Disabled: unused. configs.cm.oidc.config above points ArgoCD straight at
+  # Authentik, which bypasses dex entirely.
+  enabled: false
   resources:
     requests:
       cpu: 25m
@@ -53,6 +56,9 @@ redis:
       memory: 96Mi
 
 notifications:
+  # Disabled: unused. argocd-notifications-cm defines no triggers or templates
+  # and no Application carries a notifications.argoproj.io/subscribe annotation.
+  enabled: false
   resources:
     requests:
       cpu: 25m
