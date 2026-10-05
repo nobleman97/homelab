@@ -43,3 +43,4 @@ terraform.rc
 
 # Ansible
 *.retry
+docs/Logs*

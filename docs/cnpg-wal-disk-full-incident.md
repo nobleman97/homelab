@@ -244,7 +244,7 @@ A scan of all 164 `metadata.json` files found exactly one corrupt; all other `pa
 
 **Result:** `VMSingle` CR went `failed` → `operational`, pod `1/1 Running`, health `OK`, zero panics, 23 targets up, 120 series with 30-day history — no metric data lost. `kubelet_volume_stats_*` metrics are flowing again, which unblocks the alerting below.
 
-**Backups of the corrupt originals** remain at `/victoria-metrics-data/parts.json.corrupt.bak` and `/victoria-metrics-data/corrupt-parts.bak/`; delete them once you're satisfied.
+**Backups of the corrupt originals** were kept at `/victoria-metrics-data/parts.json.corrupt.bak` and `/victoria-metrics-data/corrupt-parts.bak/`; deleted after verification on 2026-10-03 (see the update at the end of this doc).
 
 ### 1b. `k3s-worker-2` is unstable — the likely common cause
 
@@ -259,6 +259,8 @@ Both VictoriaMetrics defects trace to an ungraceful shutdown of this node, and i
 The second outage took `master-db-1` down with it (8 pods stuck `Terminating`) until the node returned. VictoriaMetrics survived it by rescheduling to `k3s-worker-1`, since Longhorn keeps 2 replicas.
 
 This node is also the newest and on a different k3s version to the others (`v1.35.4+k3s1` vs `v1.34.5+k3s1`). **Treat repeat corruption here as a node/storage problem, not an application bug** — check its disk health, Longhorn replica status, memory pressure, and whether the underlying Proxmox VM is being starved or restarted. Until it is trusted, it is a poor home for the single-instance database.
+
+> **Later finding:** the node itself was not at fault. Its host `david` had an Intel I219 / `e1000e` NIC hanging its transmit ring (`docs/worker-2-nic-failure.md`), mitigated 2026-09-29. The October recurrence was power loss to both hosts — see the 2026-10-03 update at the end of this doc.
 
 ### 2. No alerting on either failure mode
 
@@ -301,3 +303,84 @@ CNPG supports `walStorage`, placing `pg_wal` on its own PVC. That would mean a f
 ### Preferred alternative
 
 If time and upload bandwidth allow, archive the backlog to S3 first (gzip each segment to `<destination>/<server>/wals/<16-char prefix>/<segment>.gz`) and *then* delete. That preserves PITR continuity and avoids the gap entirely. The delete-outright path above is faster but trades away point-in-time recovery for the affected window.
+
+---
+
+## 2026-10-03 update: power loss corrupts VictoriaMetrics and VictoriaLogs
+
+**Impact:** No metrics or logs stored for ~22–25 hours (table below). Dashboards and any alerting built on them were blind for the same window.
+**Data loss:** The crashloop windows, plus two partially written parts holding seconds of data. No Postgres or WordPress data lost.
+
+This is the **third** `parts.json` corruption on these volumes caused by an ungraceful shutdown (see §1 above for August). The repair procedure from §1 applied unchanged to VictoriaMetrics and, with the schema adjusted, to VictoriaLogs.
+
+### Trigger: power loss, not the NIC
+
+Both Proxmox hosts rebooted abruptly **five times, each time in the same minute as each other**:
+
+| Host time (UTC+1) | UTC | Notes |
+|---|---|---|
+| Oct 01 10:17 | 09:17 | |
+| Oct 02 12:18 | 11:18 | down ~31 min |
+| Oct 02 12:52 | 11:52 | |
+| Oct 02 17:32 | 16:32 | |
+| Oct 02 18:38 | 17:38 | |
+
+Verified from both hosts' own journals, read through the Proxmox API (`/api2/json/nodes/<node>/journal`): every boot is preceded by ordinary cron/pmxcfs lines and **no shutdown sequence**, on both hosts at once. Two independent machines losing power together is a supply event, not a host fault.
+
+It is **not** the e1000e I219 fault (`docs/worker-2-nic-failure.md`, `docs/pihole-dns-outage-nic-hang.md`): both host journals show **zero** `Detected Hardware Unit Hang`, `Reset adapter`, or `NETDEV WATCHDOG` lines since 2026-09-29 14:00, when the ethtool mitigations went in.
+
+### VictoriaMetrics — FIXED 2026-10-03
+
+```
+FATAL: cannot parse "/victoria-metrics-data/data/small/2026_10/parts.json":
+invalid character '\x00' looking for beginning of value
+```
+
+Same two defects as August:
+
+- **Index overwritten** — `data/small/2026_10/parts.json` (685 bytes) was garbage. Rebuilt from the part directory names as `{"Small":[34 parts],"Big":[]}`, schema confirmed against the healthy `2026_09/parts.json`; `data/big/2026_10` is empty. Written to a temp file, `fsync`ed, renamed into place.
+- **One part mid-creation** — `18DAB482D733A947` had a garbage `metadata.json` and 0-byte `timestamps.bin` / `values.bin`. Moved aside and dropped from the index.
+
+A scan of all 156 JSON files on the volume, including indexdb, found no further corruption.
+
+**Result:** `VMSingle` CR `operational`, pod `1/1 Running` with 0 restarts, no panics, all 24 scrape targets up. Storage opened 93 parts / ~2.64 B rows; vmagent's ~30 MB on-disk buffer replayed fully; a 30-day range query returns data back to Sep 20.
+
+### VictoriaLogs — FIXED 2026-10-03
+
+```
+FATAL: cannot parse /storage/partitions/20261002/datadb/parts.json:
+invalid character '\x00' looking for beginning of value
+```
+
+- **Index overwritten** — `partitions/20261002/datadb/parts.json` was null bytes and garbage. Note VictoriaLogs' schema differs from VictoriaMetrics': it is a **compact JSON array of part names**, not a `Small`/`Big` object. Rebuilt from the 19 intact part directories, matching the healthy partitions.
+- **One part mid-flush** — `18DAC3E62C02AA4B` had a garbage `metadata.json` (18-byte `timestamps.bin`, 910-byte `message_values.bin` — a final flush written 7 s after the previous part). Moved aside and dropped from the index.
+
+All six partitions' `parts.json` and `metadata.json` files, including indexdb, were otherwise valid. Repair was done from a temporary busybox pod pinned to `k3s-worker-2` mounting the same PVC, so neither the StatefulSet nor the ArgoCD `victoria-logs` app was touched.
+
+**Result:** storage opened 115 small parts / 2,223,923 rows in 0.23 s; pod `1/1 Running` with 0 restarts and 0 error lines; ArgoCD `victoria-logs` back to `Synced` / `Healthy`. A query over Oct 2 returns **411,647 rows — exactly the sum of the 19 parts' metadata row counts**, so everything that survived is readable. Ingest from fluent-bit resumed immediately.
+
+**Assumption:** the index was rebuilt from *all* 19 on-disk parts, on the basis that the power cut interrupted a flush, not a merge. If a merge was in flight, some of those parts would be merge inputs that had already been superseded — the failure mode would be **a few duplicated log lines, not missing ones**.
+
+### Data gaps
+
+| Store | Gap (UTC) | Recoverable? |
+|---|---|---|
+| VictoriaMetrics | Oct 2 16:36 → Oct 3 14:55 (~22 h) | No — never scraped into storage; vmagent's buffer only covered the final hours |
+| VictoriaLogs | Oct 2 ~17:44 → Oct 3 18:40 (~25 h) | No — fluent-bit did not replay it |
+
+The gap start times are derived from the stores' last surviving data and line up with the final two power cuts above to within minutes; host clocks and file mtimes were not reconciled further.
+
+The corrupt originals and moved-aside parts — from this repair **and** the August one in §1 — were **deleted after verification on 2026-10-03**.
+
+### Side effects of the same power cuts
+
+- **WordPress MariaDB** marked four tables crashed after each restart — Oct 1: `wpz7_options`, `wpz7_postmeta`, `wpz7_actionscheduler_logs`, `wpz7_actionscheduler_claims`; Oct 2: `wpz7_options`, `wpz7_actionscheduler_logs`, `wpz7_actionscheduler_claims`, `wpz7_loginizer_logs`. MariaDB's auto-recovery repaired them; `CHECK TABLE` over all 62 tables in `cognitaid_db` returns OK. The exposure is structural: **61 of 62 tables are MyISAM**, which has no crash recovery of its own.
+- **`mariadb-0` stuck `ContainerCreating` ~100 min on Oct 1** — `smaller-mariadb-pv` held a stale `longhorn-ui` attachment ticket to `k3s-worker-2`, blocking the CSI attach to `k3s-worker-1` (`the volume is currently attached to different node`). Cleared by detaching in the Longhorn UI; the pod started immediately.
+
+### Follow-ups
+
+1. **Put both Proxmox hosts on a UPS.** Power is now the dominant outage cause, and every ungraceful shutdown risks exactly this corruption again. Software fixes downstream only shorten recovery.
+2. **The VictoriaMetrics volume (`pvc-51b184ff`) is still `degraded`, single replica.** Longhorn cannot place a second copy: `k3s-worker-2` already holds one, `k3s-worker-1` has ~9 G schedulable against a 20 G volume (its 32 G is all live replicas — `master-db-1`, VictoriaLogs, Grafana — nothing reclaimable), and `k3s-server` is deliberately cordoned. Fix by growing `k3s-worker-1`'s VM disk in Terraform (a Proxmox disk resize, not a Longhorn volume expansion). Raising over-provisioning is not recommended — Longhorn shares worker-1's root filesystem and would approach kubelet eviction thresholds as the volume fills.
+3. **The `master-db` node-affinity pin is committed but not applied.** `k8s/manifest/cnpg/cluster.yaml` excludes `k3s-worker-2` (commit `364cad1`), but the live Cluster has only `podAntiAffinityType: preferred`, and `master-db-1` is running on `k3s-worker-2`. Needs `kubectl apply` plus a pod delete to move it.
+4. **Host NIC watchdog:** `nic0-unwedge.timer` is enabled on both hosts and survives reboot; the repo's `nic-watchdog` units are not deployed (`hosts/proxmox/README.md` is out of date on this).
+5. **Convert the WordPress tables to InnoDB** (`ALTER TABLE … ENGINE=InnoDB`, after a backup) so the next power cut does not mark tables crashed.

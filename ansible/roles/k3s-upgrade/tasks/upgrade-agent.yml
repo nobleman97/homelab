@@ -8,19 +8,19 @@
   meta: end_host
   when: k3s_version in current_version.stdout
 
-- name: Drain worker node
-  command: >
-    kubectl drain {{ k3s_node_name }}
-    --ignore-daemonsets
-    --delete-emptydir-data
-    --timeout={{ drain_timeout }}
-  delegate_to: localhost
-  become: false
+# - name: Drain worker node
+#   command: >
+#     kubectl drain {{ k3s_node_name }}
+#     --ignore-daemonsets
+#     --delete-emptydir-data
+#     --timeout={{ drain_timeout }}
+#   delegate_to: localhost
+#   become: false
 
 - name: Install target k3s version (agent)
   shell: |
     curl -sfL https://get.k3s.io | \
-      INSTALL_K3S_VERSION={{ k3s_version }} \
+      INSTALL_K3S_VERSION={{ k3s_version }}+k3s1 \
       K3S_URL=https://{{ k3s_server_ip }}:6443 \
       K3S_TOKEN={{ k3s_token }} \
       sh -s - agent

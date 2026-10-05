@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: wordpress
-          image: wordpress:7.0-php8.2-apache
+          image: wordpress:7.1.2-php8.2-apache
           ports:
             - containerPort: 80
           env:
@@ -45,6 +45,7 @@ spec:
                 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
                   $_SERVER['HTTPS'] = 'on';
                 }
+                define('DISALLOW_FILE_MODS', true);
             - name: WORDPRESS_TABLE_PREFIX
               value: "wpz7_"
           resources:
@@ -58,10 +59,21 @@ spec:
           volumeMounts:
             - name: wp-content
               mountPath: /var/www/html/wp-content
+            - name: apache-hardening
+              mountPath: /etc/apache2/conf-enabled/block-xmlrpc.conf
+              subPath: block-xmlrpc.conf
+              readOnly: true
+            - name: apache-hardening
+              mountPath: /etc/apache2/conf-enabled/block-uploads-php.conf
+              subPath: block-uploads-php.conf
+              readOnly: true
       volumes:
         - name: wp-content
           persistentVolumeClaim:
             claimName: wordpress-pvc
+        - name: apache-hardening
+          configMap:
+            name: wordpress-apache-hardening
 ---
 apiVersion: v1
 kind: Service

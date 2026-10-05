@@ -10,7 +10,7 @@
 
 - name: Drain control plane
   command: >
-    kubectl drain {{ inventory_hostname }}
+    kubectl drain {{ k3s_node_name }} --force
     --ignore-daemonsets
     --delete-emptydir-data
     --timeout={{ drain_timeout }}
@@ -20,7 +20,7 @@
 - name: Install target k3s version (server)
   shell: |
     curl -sfL https://get.k3s.io | \
-      INSTALL_K3S_VERSION={{ k3s_version }} \
+      INSTALL_K3S_VERSION={{ k3s_version }}+k3s1 \
       sh -
   args:
     executable: /bin/bash
@@ -33,7 +33,7 @@
   until: node_ready.rc == 0
 
 - name: Uncordon control plane
-  command: kubectl uncordon {{ inventory_hostname }}
+  command: kubectl uncordon {{ k3s_node_name }}
   delegate_to: localhost
   become: false
 
@@ -44,4 +44,4 @@
 
 - name: Show version after upgrade
   debug:
-    msg: "{{ inventory_hostname }}: {{ upgraded_version.stdout }}"
+    msg: "{{ k3s_node_name }}: {{ upgraded_version.stdout }}"
