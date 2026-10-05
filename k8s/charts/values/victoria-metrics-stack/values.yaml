@@ -63,6 +63,28 @@ alertmanager:
         memory: 96Mi
     affinity: *monitoring_affinity
 
+# k3s runs the apiserver, etcd, scheduler and kubelet in one process with one
+# metrics registry, so the server node's kubelet /metrics re-exposes everything
+# the kubeApiServer job already scrapes (~59k duplicate series, ~30% of the
+# total). Drop the apiserver_/etcd_ families from the kubelet job.
+# These rules replace the chart's kubelet defaults (lists don't merge), so the
+# first three entries copy chart 0.79.1's defaults.
+kubelet:
+  vmScrapes:
+    kubelet:
+      spec:
+        metricRelabelConfigs:
+          - action: labeldrop
+            regex: (uid)
+          - action: labeldrop
+            regex: (id|name)
+          - action: drop
+            source_labels: [__name__]
+            regex: (rest_client_request_duration_seconds_bucket|rest_client_request_duration_seconds_sum|rest_client_request_duration_seconds_count)
+          - action: drop
+            source_labels: [__name__]
+            regex: (apiserver|etcd)_.+
+
 grafana:
   enabled: true
 
