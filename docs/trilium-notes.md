@@ -1,5 +1,7 @@
 # Deploying Trilium Notes
 
+> **Decommissioned 2026-10-06.** Trilium was retired on purpose: its ArgoCD app, chart, values and IngressRoute were removed from the repo, and its notes.osose.xyz tunnel route was dropped. Kept for reference only.
+
 ## What It Is
 
 Trilium Notes is a self-hosted, hierarchical note-taking application. All data — notes, attachments, revision history — is stored in a single SQLite database file on disk. There is no external database dependency. The persistent volume exists solely to keep that file alive across pod restarts.

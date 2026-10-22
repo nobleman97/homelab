@@ -1,5 +1,7 @@
 # Database Query Troubleshooting — EXPLAIN ANALYZE Runbook
 
+> **Decommissioned 2026-10-06.** It targets postgres-01 (192.168.100.33), a retired demo VM. The SQL techniques are generic, but master-db does not load pg_stat_statements. Kept for reference only.
+
 Demonstrates how to identify and fix a slow query using `pg_stat_statements` and `EXPLAIN ANALYZE`.
 PostgreSQL runs on `postgres-01` (192.168.100.33). Connect from your local machine:
 

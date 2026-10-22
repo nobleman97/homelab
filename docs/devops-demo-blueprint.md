@@ -1,5 +1,7 @@
 # DevOps Demo Platform — Execution Blueprint
 
+> **Decommissioned 2026-10-06.** The demo VMs (traffic-proxy-01, app-server-01, postgres-01; .31-.33) were retired on purpose. Their Terraform entries, Ansible inventory groups, roles and bootstrap playbook, VMStaticScrape and better.osose.xyz tunnel route were removed. The app source is still under projects/better/. Kept for reference only.
+
 A production-grade traffic and reliability platform built on bare VMs (no Kubernetes) to demonstrate
 NGINX mastery, zero-downtime deployments, database performance engineering, full observability, and
 chaos/incident response. Designed as a portfolio project targeting the Betternship DevOps role.
