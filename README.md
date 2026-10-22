@@ -29,8 +29,6 @@ Public services are exposed at **osose.xyz** via a Cloudflare tunnel. No ports a
 | Database | CloudNativePG (PostgreSQL operator) |
 | DB backups | Barman Cloud Plugin → S3 + daily `ScheduledBackup` |
 | Observability | VictoriaMetrics stack (VMSingle, VMAgent, VMAlert, Grafana, Alertmanager) |
-| Notes | Trilium Notes |
-| Automation | n8n |
 
 ---
 
@@ -46,7 +44,6 @@ homelab/
 ├── k8s/
 │   ├── argo-apps/          # ArgoCD Application CRDs (one file per app)
 │   ├── charts/
-│   │   ├── trilium-notes/  # Vendored Helm chart
 │   │   └── values/         # Helm value overrides per release
 │   └── manifest/
 │       ├── auth/           # Authentik outpost, ForwardAuth middleware, IngressRoutes
@@ -63,7 +60,7 @@ homelab/
 All inbound traffic flows through a single Cloudflare Tunnel running as a Kubernetes `Deployment`. The tunnel process dials out to Cloudflare — no firewall rules needed, no ports forwarded. Adding a new public hostname is a one-line YAML change to `k8s/charts/values/cloudflared/values.yaml`; ArgoCD auto-syncs it within seconds.
 
 ### SSO on everything
-Authentik runs as an OIDC provider and reverse-proxy outpost. ArgoCD and Grafana use native OIDC (`role:admin` and `Admin` role granted to members of their respective Authentik groups). Trilium Notes and n8n use Traefik's `ForwardAuth` middleware — the outpost validates the session and redirects to the Authentik login page if absent. One identity provider, one login prompt, across the whole platform.
+Authentik runs as an OIDC provider and reverse-proxy outpost. ArgoCD and Grafana use native OIDC (`role:admin` and `Admin` role granted to members of their respective Authentik groups). One identity provider, one login prompt, across the whole platform.
 
 ### GitOps with ArgoCD multi-source
 The `cloudflared` and `monitoring` ArgoCD Applications use the multi-source pattern: the Helm chart is pulled from its upstream registry, while the value overrides come from this Git repo. This means the chart version can be pinned and bumped in code, and value drift is impossible — the cluster always reflects what's in `main`.
@@ -85,8 +82,6 @@ The VictoriaMetrics stack runs inside Kubernetes, but the bare-metal demo VMs ex
 |---|---|---|
 | ArgoCD | argo.osose.xyz | Authentik OIDC |
 | Authentik | auth.osose.xyz | — |
-| Trilium Notes | notes.osose.xyz | Authentik ForwardAuth |
-| n8n | n8n.osose.xyz | Authentik ForwardAuth |
 | Grafana | grafana.osose.xyz | Authentik OIDC |
 
 ---
@@ -99,5 +94,5 @@ Operational runbooks live in [`docs/`](docs/):
 - [`cnpg-storage-migration.md`](docs/cnpg-storage-migration.md) — migrating the database cluster between StorageClasses
 - [`db-query-troubleshooting.md`](docs/db-query-troubleshooting.md) — PostgreSQL slow query analysis with `pg_stat_statements` and `EXPLAIN ANALYZE`
 - [`monitoring-stack-plan.md`](docs/monitoring-stack-plan.md) — VictoriaMetrics + Grafana + Alertmanager deployment reference
-- [`trilium-notes.md`](docs/trilium-notes.md) — Trilium deployment and Authentik integration guide
+- [`trilium-notes.md`](docs/trilium-notes.md) — Trilium deployment guide (decommissioned)
 - [`remove-vm.md`](docs/remove-vm.md) — safe VM decommission procedure (Terraform + monitoring cleanup)

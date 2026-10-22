@@ -15,7 +15,7 @@ spec:
         valueFiles:
           - $values/k8s/charts/values/cloudflared/values.yaml
     - repoURL: https://github.com/nobleman97/homelab.git
-      targetRevision: feature/eks-setup
+      targetRevision: HEAD
       ref: values
   project: default
   syncPolicy:
