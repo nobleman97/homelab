@@ -11,9 +11,7 @@ _affinity: &monitoring_affinity
               values:
                 - monitoring
 
-# Resource requests below are sized from 15 days of this cluster's own
-# VictoriaMetrics history: p95 usage plus modest headroom. Requests only, by
-# design — memory limits risk OOMKills and CPU limits cause throttling.
+
 vmsingle:
   enabled: true
   spec:
@@ -53,10 +51,7 @@ vmalert:
 alertmanager:
   enabled: true
   spec:
-    # Full alertmanager config (including SMTP password) lives in this secret.
-    # Create it manually before syncing — see docs/monitoring-stack-plan.md.
     configSecret: alertmanager-config
-    # Idles well under 96Mi; matched to vmalert for simplicity.
     resources:
       requests:
         cpu: 25m
