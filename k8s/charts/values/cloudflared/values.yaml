@@ -2,8 +2,6 @@ tunnelConfig:
   name: homelab
 
 ingress:
-  - hostname: calc.osose.xyz
-    service: http://subnet-calculator.apps.svc.cluster.local:80
   - hostname: argo.osose.xyz
     service: http://argo-argocd-server.argocd.svc.cluster.local:80
   - hostname: auth.osose.xyz
@@ -14,6 +12,8 @@ ingress:
     service: http://monitoring-grafana.monitoring.svc.cluster.local:80
   - hostname: techguide.osose.xyz
     service: http://tech-noexp-svc.landing-pages.svc.cluster.local:80
+  - hostname: jellyfin.osose.xyz
+    service: http://jellyfin.jellyfin.svc.cluster.local:8096
 
   - service: http_status:404
 
