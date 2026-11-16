@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jellyfin
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+  namespace: jellyfin
+  labels:
+    app: jellyfin
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate          # RWO volumes, never run two pods against the same config
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      # nodeSelector:
+      #   kubernetes.io/hostname: minipc-1     # pin to the node with the iGPU if you use hardware transcoding
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        # supplementalGroups: [105]            # GID of "render" on the node, needed for /dev/dri access
+      containers:
+        - name: jellyfin
+          image: jellyfin/jellyfin:12.4     # pin a version, bump it deliberately via ArgoCD
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8096
+          env:
+            - name: TZ
+              value: Africa/Lagos
+            - name: JELLYFIN_PublishedServerUrl
+              value: https://jellyfin.osose.xyz
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 3Gi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: cache
+              mountPath: /cache
+            - name: media
+              mountPath: /media
+              readOnly: false
+            # - name: dri
+            #   mountPath: /dev/dri
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 20
+            failureThreshold: 5
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: jellyfin-config
+        - name: media
+          persistentVolumeClaim:
+            claimName: jellyfin-media
+        - name: cache
+          emptyDir:
+            sizeLimit: 5Gi     # transcode and image cache, safe to lose
+        # - name: dri
+        #   hostPath:
+        #     path: /dev/dri

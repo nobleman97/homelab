@@ -14,6 +14,8 @@ ingress:
     service: http://tech-noexp-svc.landing-pages.svc.cluster.local:80
   - hostname: jellyfin.osose.xyz
     service: http://jellyfin.jellyfin.svc.cluster.local:8096
+  - hostname: sonar.osose.xyz
+    service: http://sonarr.jellyfin.svc.cluster.local:8989
 
   - service: http_status:404
 
