@@ -47,8 +47,8 @@ Always use `longhorn-retain` for CNPG.
 Stop anything writing to the database to ensure a clean, consistent backup.
 
 ```bash
-# Example: scale down n8n
-kubectl scale deployment n8n --replicas=0 -n apps
+# Authentik is the only current master-db client (n8n was retired 2026-10)
+kubectl scale deployment authentik-server authentik-worker --replicas=0 -n apps
 
 # Verify no active connections
 kubectl exec -n database master-db-1 -- psql -U postgres -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';"
@@ -245,7 +245,7 @@ The `STORAGECLASS` column should show `longhorn-retain`.
 ### Step 9 — Scale Applications Back Up
 
 ```bash
-kubectl scale deployment n8n --replicas=1 -n apps
+kubectl scale deployment authentik-server authentik-worker --replicas=1 -n apps
 ```
 
 ---
