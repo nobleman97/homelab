@@ -23,8 +23,10 @@ spec:
       labels:
         app: jellyfin
     spec:
-      # nodeSelector:
-      #   kubernetes.io/hostname: minipc-1     # pin to the node with the iGPU if you use hardware transcoding
+      # Pinned to k3s-worker-3: rebalancing off worker-1/2, which were near full on memory requests (2026-11-22).
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker-3
+      # No iGPU passthrough yet. For hardware transcoding, add /dev/dri (see the commented volume below).
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -32,7 +34,7 @@ spec:
         # supplementalGroups: [105]            # GID of "render" on the node, needed for /dev/dri access
       containers:
         - name: jellyfin
-          image: jellyfin/jellyfin:12.4     # pin a version, bump it deliberately via ArgoCD
+          image: jellyfin/jellyfin:12.4     # pin a version, bump it deliberately (applied with kubectl apply, no ArgoCD app)
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

@@ -15,6 +15,9 @@ spec:
       labels:
         app: sonarr
     spec:
+      # Pinned to k3s-worker-3: rebalancing off worker-1/2, which were near full on memory requests (2026-11-22).
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker-3
       securityContext:
         fsGroup: 1000
       affinity:

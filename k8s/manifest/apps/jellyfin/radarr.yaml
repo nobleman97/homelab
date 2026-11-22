@@ -16,6 +16,9 @@ spec:
       labels:
         app: qbittorrent
     spec:
+      # Pinned to k3s-worker-3: rebalancing off worker-1/2, which were near full on memory requests (2026-11-22).
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker-3
       securityContext:
         fsGroup: 1000
       affinity:
@@ -39,7 +42,8 @@ spec:
               mountPath: /media
       containers:
         - name: qbittorrent
-          image: lscr.io/linuxserver/qbittorrent:latest
+          # Docker Hub mirror of lscr.io (same digests). ghcr/lscr pulls stalled on worker-3 during the 2026-11-22 move.
+          image: docker.io/linuxserver/qbittorrent:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: PUID
@@ -104,6 +108,9 @@ spec:
       labels:
         app: radarr
     spec:
+      # Pinned to k3s-worker-3: rebalancing off worker-1/2, which were near full on memory requests (2026-11-22).
+      nodeSelector:
+        kubernetes.io/hostname: k3s-worker-3
       securityContext:
         fsGroup: 1000
       affinity:
