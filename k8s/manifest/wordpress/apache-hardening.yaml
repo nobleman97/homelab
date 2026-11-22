@@ -19,3 +19,57 @@ data:
         Require all denied
       </FilesMatch>
     </Directory>
+  # Scanners were ~40% of all requests (7d of logs, Nov 2026), and WordPress
+  # rendered every 404 through PHP (~85KB, ~130ms CPU each). Parallel bursts
+  # filled the 512Mi memcg and OOM-killed apache2. These run in the access
+  # phase / before .htaccess mod_rewrite, so PHP is never invoked.
+  block-scanners.conf: |
+    # Dotfiles and dot-dirs (/.env, /.git, /.aws, .htaccess anywhere),
+    # except /.well-known/ (ACME, security.txt).
+    <LocationMatch "/\.(?!well-known(?:/|$))">
+      Require all denied
+    </LocationMatch>
+    # Backups, dumps, archives, logs and secrets. Nothing legitimate on this
+    # site uses these (checked the docroot; uploads/wp_encryption/debug.log
+    # and plugin .sql/.sh files are exactly what must not be served).
+    <LocationMatch "(?i)(\.(bak|backup|bk|old|orig|save|swp|swo|tmp|sql|sqlite|db|gz|tgz|tar|zip|rar|7z|bz2|xz|log|ini|env|ya?ml|pem|key|sh)|~)$">
+      Require all denied
+    </LocationMatch>
+    # Plugin/theme readmes only leak versions to vulnerability scanners.
+    <LocationMatch "(?i)^/wp-content/(plugins|themes)/.+/(readme|changelog)[^/]*\.(txt|md|html?)$">
+      Require all denied
+    </LocationMatch>
+    <FilesMatch "(?i)^wp-config(-sample)?\.php$">
+      Require all denied
+    </FilesMatch>
+    # Cheap 404 for files that don't exist: webshell probes (/shell.php,
+    # /wp-content/about.php, ...) and missing static assets. Without this the
+    # .htaccess "!-f -> index.php" rule renders a full WordPress 404 page.
+    # <If> merges after .htaccess, so RewriteEngine Off wins; real files
+    # (index.php, wp-login.php, wp-admin/*) and pretty permalinks are untouched.
+    <If "%{REQUEST_URI} =~ m#(\.(php\d?|phtml|pht|phar)|^/wp-(content|includes)/.*\.(css|js|map|png|jpe?g|gif|webp|avif|svg|ico|woff2?|ttf|eot|otf|txt|mp4|webm|pdf))$#i && ! -f %{REQUEST_FILENAME}">
+      RewriteEngine Off
+      SetHandler None
+    </If>
+  # Debian's mpm_prefork.conf allows 150 children; at ~20-28MB private memory
+  # each plus ~65-128MB shared opcache, ~15 parallel requests already exceeded
+  # the 512Mi limit (~480 OOM kills in 30d). Budget (Nov 2026 measurements):
+  #   8 children x 28MB (worst observed anon) = 224MB
+  #   opcache shm ceiling 128MB + kernel ~20MB + parent ~12MB = ~160MB
+  #   = ~384MB, leaving ~128MB for one request hitting PHP's 128M memory_limit.
+  # Extra connections wait in the listen backlog instead of forking. PHP is
+  # CPU-bound (~240ms/homepage), so 8 workers is well above what 2 CPUs serve.
+  # conf-enabled/ loads after mods-enabled/, so these values override.
+  mpm-prefork-tuning.conf: |
+    <IfModule mpm_prefork_module>
+      StartServers             2
+      MinSpareServers          2
+      MaxSpareServers          4
+      ServerLimit              8
+      MaxRequestWorkers        8
+      # Recycle children to bound PHP/extension memory growth.
+      MaxConnectionsPerChild 500
+    </IfModule>
+    # Idle keep-alive connections (cloudflared pools them) pin a prefork child;
+    # release it sooner so 8 workers aren't held idle.
+    KeepAliveTimeout 2

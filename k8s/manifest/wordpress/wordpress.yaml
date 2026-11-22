@@ -16,6 +16,18 @@ spec:
       labels:
         app: wordpress
     spec:
+      # Prefer the node running mariadb-0: lower DB latency, and the large
+      # floating-tag image is already cached there (a cold pull on another node
+      # took >8 min of downtime on 2026-11-22). Preferred, not required.
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: mariadb
       containers:
         - name: wordpress
           image: wordpress:php8.5-apache  #wordpress:7.2-php8.5-apache
@@ -57,7 +69,13 @@ spec:
               cpu: 50m
               memory: 384Mi
             limits:
-              cpu: 500m
+              # One uncached homepage render costs ~240ms CPU (no page cache on
+              # Apache), so a 500m quota (50ms/100ms period) throttled every page
+              # view and fired CPUThrottlingHigh. 2 cores lets single requests run
+              # unthrottled; still capped (not unlimited) so a compromised pod
+              # can't take all 3 node cores. Average use is ~10m.
+              cpu: "2"
+              # Memory is bounded by MaxRequestWorkers in mpm-prefork-tuning.conf.
               memory: 512Mi
           volumeMounts:
             - name: wp-content
@@ -69,6 +87,15 @@ spec:
             - name: apache-hardening
               mountPath: /etc/apache2/conf-enabled/block-uploads-php.conf
               subPath: block-uploads-php.conf
+              readOnly: true
+            # subPath mounts don't hot-reload: restart the pod after changing these.
+            - name: apache-hardening
+              mountPath: /etc/apache2/conf-enabled/block-scanners.conf
+              subPath: block-scanners.conf
+              readOnly: true
+            - name: apache-hardening
+              mountPath: /etc/apache2/conf-enabled/mpm-prefork-tuning.conf
+              subPath: mpm-prefork-tuning.conf
               readOnly: true
       volumes:
         - name: wp-content
