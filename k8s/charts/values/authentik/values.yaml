@@ -31,22 +31,30 @@ server:
     # -- enable an ingress resource for the authentik server
     enabled: false
 
-  # -- Resource requests for the authentik server. Sized from 15 days of this
-  # cluster's own metrics: p95 715Mi, peak 832Mi. Requests only, no limits.
+  # -- One gunicorn worker instead of the default two. Each worker loads the
+  # full Django app (~300Mi RSS); one is plenty for a single-user homelab.
+  env:
+    - name: AUTHENTIK_WEB__WORKERS
+      value: "1"
+
+  # -- Resource requests for the authentik server. With 2 gunicorn workers the
+  # cadvisor-only metrics (2026-11-07..22) showed p95 986Mi, peak 1024Mi, CPU
+  # p95 53m. 768Mi assumes ~300Mi saved by WEB__WORKERS=1 — re-check after a
+  # few days. Requests only, no limits.
   resources:
     requests:
-      cpu: 100m
+      cpu: 75m
       memory: 768Mi
 
 worker:
-  # -- Resource requests for the authentik worker. Its memory is bursty rather
-  # than leaking: the hourly trace cycles ~760Mi -> 2032Mi -> 1308Mi -> 2229Mi
-  # while processing tasks, then falls back. The request is deliberately set at
-  # the p95 (1536Mi), BELOW the 2288Mi peak — it reserves the steady-state need
-  # and lets the bursts borrow spare node capacity. Requests only, no limits.
+  # -- Resource requests for the authentik worker. Memory is flat, not bursty:
+  # cadvisor-only metrics (2026-11-07..22) show p50 587Mi, p95 611Mi, peak
+  # 629Mi; CPU p95 49m with rare spikes to ~380m. (Earlier "2Gi bursts" came
+  # from dashboards double-counting kubelet /metrics/resource + /metrics/cadvisor.)
+  # Requests only, no limits.
   resources:
     requests:
-      cpu: 200m
-      memory: 1536Mi
+      cpu: 50m
+      memory: 640Mi
 
 # helm upgrade  --install authentik goauthentik/authentik --version 2026.2.3 -f values.yaml -n apps  
