@@ -79,6 +79,13 @@ kubelet:
           - action: drop
             source_labels: [__name__]
             regex: (apiserver|etcd)_.+
+    # The kubelet's /metrics/resource endpoint re-exposes container_cpu_usage_seconds_total
+    # and container_memory_working_set_bytes, which /metrics/cadvisor already provides.
+    # With both scraped, every container has two identical series and any sum() by
+    # pod/namespace reports 2x the real usage (e.g. authentik-server showed ~1.9Gi
+    # vs ~960Mi in `kubectl top`). Keep cadvisor, drop resource.
+    resources:
+      enabled: false
 
 grafana:
   enabled: true
