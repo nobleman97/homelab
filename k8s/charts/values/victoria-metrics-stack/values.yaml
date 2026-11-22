@@ -90,6 +90,16 @@ kubelet:
 grafana:
   enabled: true
 
+  # Without this the chart generates a random admin password on every render,
+  # so checksum/secret changed on each ArgoCD re-render and Grafana restarted
+  # (rev 265 by 2026-11-22). Secret is created by hand, not in git:
+  #   kubectl create secret generic grafana-admin -n monitoring \
+  #     --from-literal=admin-user=admin --from-literal=admin-password=...
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+
   deploymentStrategy:
     type: Recreate
 
