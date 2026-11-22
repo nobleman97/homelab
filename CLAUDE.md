@@ -114,7 +114,9 @@ Per `helm list -A` and `kubectl get applications -n argocd`:
 | victoria-logs | victoria-logs-single 0.13.9 | monitoring | ArgoCD (`k8s/argo-apps/victoria-logs.yaml`) |
 | fluent-bit | fluent/fluent-bit 0.57.9 | monitoring | ArgoCD (`k8s/argo-apps/fluent-bit.yaml`) |
 
-`helm list` also shows a `cloudflared` release (rev 10, status `failed`, 2026-11-13) left over from a manual `helm upgrade`; ArgoCD renders the app itself and reports it Synced/Healthy.
+Never `helm upgrade`/`helm uninstall` an ArgoCD-managed release by hand: ArgoCD owns those objects, so a manual upgrade fails with field-manager conflicts and an uninstall deletes the live resources. (A stale failed `cloudflared` Helm release was cleaned up on 2026-11-22 by deleting only its `sh.helm.release.v1.cloudflared.*` secrets.)
+
+The Authentik outpost is the hand-applied `authentik-outpost` Deployment (`k8s/manifest/auth/`); it authenticates as the `homelab-proxy` outpost. Authentik-generated `ak-outpost-homelab-proxy` objects were orphans and were deleted on 2026-11-22.
 
 ### ArgoCD Apps
 
