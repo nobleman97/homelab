@@ -1,4 +1,4 @@
-# Rendered from community-charts/cloudflared 2.2.7 (chart hardcodes ConfigMap name; kept as plain manifests).
+# Rendered from community-charts/cloudflared 2.2.7 (chart hardcodes ConfigMap name; kept as plain manifests). Image bumped to 2026.11.2.
 # Tunnel homelab-2. Creds secret cloudflared-credentials is created with kubectl, never committed.
 apiVersion: v1
 kind: ServiceAccount
@@ -8,7 +8,7 @@ metadata:
     app: cloudflared
     app.kubernetes.io/name: cloudflared
     app.kubernetes.io/instance: cloudflared
-    app.kubernetes.io/version: "2026.2.0"
+    app.kubernetes.io/version: "2026.11.2"
 automountServiceAccountToken: true
 ---
 apiVersion: v1
@@ -65,7 +65,7 @@ metadata:
     app: cloudflared
     app.kubernetes.io/name: cloudflared
     app.kubernetes.io/instance: cloudflared
-    app.kubernetes.io/version: "2026.2.0"
+    app.kubernetes.io/version: "2026.11.2"
 spec:
   selector:
     matchLabels:
@@ -105,7 +105,7 @@ spec:
             runAsGroup: 65532
             runAsNonRoot: true
             runAsUser: 65532
-          image: "cloudflare/cloudflared:2026.2.0"
+          image: "cloudflare/cloudflared:2026.11.2"
           args:
             - tunnel
             - --config
