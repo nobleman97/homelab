@@ -78,7 +78,6 @@ k8s/
 │       ├── argocd/
 │       ├── authentik/
 │       ├── cert-manager/
-│       ├── cloudflared/
 │       ├── fluent-bit/
 │       ├── longhorn/
 │       ├── personal/              # empty, untracked
@@ -88,6 +87,7 @@ k8s/
     ├── apps/
     │   ├── guide_1.yaml           # tech-noexp landing page (ns landing-pages)
     │   └── jellyfin/              # Jellyfin + sonarr/radarr/prowlarr/qbittorrent (ns jellyfin)
+    ├── cloudflared/    # Cloudflare tunnel DaemonSet (homelab-2) — synced by ArgoCD app `cloudflared`
     ├── auth/           # Authentik outpost Deployment/Service, Traefik ForwardAuth middleware
     ├── cnpg/           # CloudNativePG Cluster + ObjectStores + ScheduledBackup
     ├── monitoring/     # VMAlertmanagerConfig routes, debug PV pod (datadog-agent.yaml is gitignored)
@@ -96,7 +96,7 @@ k8s/
     └── storage-classes.yaml
 ```
 
-Apply manifests with `kubectl apply -f <file>`. Everything under `k8s/manifest/` (including Jellyfin and WordPress) is applied manually — no ArgoCD app covers it.
+Apply manifests with `kubectl apply -f <file>`. Everything under `k8s/manifest/` (including Jellyfin and WordPress) is applied manually, except `k8s/manifest/cloudflared/`, which ArgoCD syncs.
 
 ### Helm releases
 
@@ -109,7 +109,6 @@ Per `helm list -A` and `kubectl get applications -n argocd`:
 | cert-manager | cert-manager v1.20.2 | cert-manager | manual Helm, values in `k8s/charts/values/cert-manager/` |
 | longhorn | longhorn 1.11.2 | longhorn-system | manual Helm, values in `k8s/charts/values/longhorn/` |
 | traefik, traefik-crd | traefik 40.1.5+up40.1.0 | kube-system | bundled with k3s |
-| cloudflared | community-charts/cloudflared 2.2.7 | cloudflare | ArgoCD (`k8s/argo-apps/cloudflared.yaml`) |
 | monitoring | victoria-metrics-k8s-stack 0.79.1 | monitoring | ArgoCD (`k8s/argo-apps/monitoring.yaml`) |
 | victoria-logs | victoria-logs-single 0.13.9 | monitoring | ArgoCD (`k8s/argo-apps/victoria-logs.yaml`) |
 | fluent-bit | fluent/fluent-bit 0.57.9 | monitoring | ArgoCD (`k8s/argo-apps/fluent-bit.yaml`) |
@@ -123,9 +122,9 @@ The Authentik outpost is the hand-applied `authentik-outpost` Deployment (`k8s/m
 ArgoCD is exposed at **argo.osose.xyz** (Cloudflare tunnel → ArgoCD server).  
 OIDC login is wired to Authentik (`auth.osose.xyz`); members of the `argocd-admins` group get `role:admin`, everyone else `role:readonly`.
 
-All four apps use the multi-source pattern: chart from the upstream repo, values from `$values/k8s/charts/values/<dir>/values.yaml` in `github.com/nobleman97/homelab` at `targetRevision: HEAD`.
+`monitoring`, `victoria-logs` and `fluent-bit` use the multi-source pattern: chart from the upstream repo, values from `$values/k8s/charts/values/<dir>/values.yaml` in `github.com/nobleman97/homelab` at `targetRevision: HEAD`.
 
-- `cloudflared.yaml` — `community-charts/cloudflared` 2.2.7 → ns `cloudflare` (auto-sync, no prune/self-heal)
+- `cloudflared.yaml` — plain manifests at `k8s/manifest/cloudflared/` → ns `cloudflare` (auto-sync, no prune/self-heal). Rendered from `community-charts/cloudflared` 2.2.7, which hardcodes its ConfigMap name. Tunnel is `homelab-2` (889b6bf2); creds Secret `cloudflared-credentials` and origin cert `cert-pem-file-secret` are created with kubectl, never committed. The old `homelab` tunnel was deleted on 2026-11-25 to lock out a stray connector.
 - `monitoring.yaml` — `victoria-metrics-k8s-stack` 0.79.1 → ns `monitoring` (auto-sync, prune, self-heal, ServerSideApply)
 - `victoria-logs.yaml` — `victoria-logs-single` 0.13.9 → ns `monitoring` (auto-sync, prune, self-heal)
 - `fluent-bit.yaml` — `fluent-bit` 0.57.9 → ns `monitoring` (auto-sync, prune, self-heal)
@@ -137,7 +136,7 @@ All four apps use the multi-source pattern: chart from the upstream repo, values
 - **External access**: Cloudflare tunnel (`cloudflared`) — no ports exposed directly from the cluster
 - **Auth**: Authentik reverse-proxy outpost (`ghcr.io/goauthentik/proxy:2026.2.3`) in namespace `apps`; Traefik `ForwardAuth` middleware (`authentik-forward-auth`). No IngressRoute currently uses it.
 
-#### Public hostnames (`k8s/charts/values/cloudflared/values.yaml`)
+#### Public hostnames (`k8s/manifest/cloudflared/cloudflared.yaml`, ConfigMap `cloudflared`)
 
 The tunnel routes straight to each Service (not through Traefik):
 
@@ -149,7 +148,7 @@ The tunnel routes straight to each Service (not through Traefik):
 | grafana.osose.xyz | monitoring-grafana.monitoring | 80 |
 | techguide.osose.xyz | tech-noexp-svc.landing-pages | 80 |
 | jellyfin.osose.xyz | jellyfin.jellyfin | 8096 |
-| sonar.osose.xyz | sonarr.jellyfin | 8989 |
+| sonar.osose.xyz | sonarr.jellyfin | 8989 (ingress rule only — no DNS record exists, so not reachable) |
 
 ArgoCD and Grafana log in via Authentik OIDC (Grafana: `grafana-admins` → Admin, else Viewer). WordPress (`cognitaid.com`) uses its own `cloudflared` Deployment in ns `wordpress`; image is `wordpress:php8.5-apache`.
 

@@ -62,13 +62,13 @@ homelab/
 ## Interesting Details
 
 ### Zero open ports
-All inbound traffic flows through a Cloudflare Tunnel running as a Kubernetes `DaemonSet` (one connector per node). The tunnel process dials out to Cloudflare — no firewall rules needed, no ports forwarded. Adding a new public hostname is a one-line YAML change to `k8s/charts/values/cloudflared/values.yaml`; ArgoCD auto-syncs it within seconds.
+All inbound traffic flows through a Cloudflare Tunnel running as a Kubernetes `DaemonSet` (one connector per node). The tunnel process dials out to Cloudflare — no firewall rules needed, no ports forwarded. Adding a new public hostname is a one-line YAML change to the ConfigMap in `k8s/manifest/cloudflared/cloudflared.yaml`; ArgoCD auto-syncs it within seconds.
 
 ### SSO on everything
 Authentik is the identity provider. ArgoCD and Grafana use native OIDC (`role:admin` and `Admin` are granted to members of their respective Authentik groups). An Authentik proxy outpost and a Traefik `ForwardAuth` middleware are available for apps that have no login of their own.
 
 ### GitOps with ArgoCD multi-source
-The `cloudflared`, `monitoring`, `victoria-logs` and `fluent-bit` ArgoCD Applications use the multi-source pattern: the Helm chart is pulled from its upstream registry, while the value overrides come from this Git repo. This means the chart version can be pinned and bumped in code, and value drift is impossible — the cluster always reflects what's in `main`.
+The `monitoring`, `victoria-logs` and `fluent-bit` ArgoCD Applications use the multi-source pattern: the Helm chart is pulled from its upstream registry, while the value overrides come from this Git repo. This means the chart version can be pinned and bumped in code, and value drift is impossible — the cluster always reflects what's in `main`.
 
 ### Database operator with WAL archiving
 CloudNativePG manages a single-instance PostgreSQL cluster. Every WAL segment is shipped to S3 via the Barman Cloud Plugin, providing continuous archiving on top of the daily `ScheduledBackup`. Recovery bootstraps from the latest base backup and replays WAL — point-in-time recovery is available without any manual snapshot orchestration.
