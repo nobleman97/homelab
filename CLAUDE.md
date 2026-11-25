@@ -124,7 +124,7 @@ OIDC login is wired to Authentik (`auth.osose.xyz`); members of the `argocd-admi
 
 `monitoring`, `victoria-logs` and `fluent-bit` use the multi-source pattern: chart from the upstream repo, values from `$values/k8s/charts/values/<dir>/values.yaml` in `github.com/nobleman97/homelab` at `targetRevision: HEAD`.
 
-- `cloudflared.yaml` — plain manifests at `k8s/manifest/cloudflared/` → ns `cloudflare` (auto-sync, no prune/self-heal). Rendered from `community-charts/cloudflared` 2.2.7, which hardcodes its ConfigMap name. Tunnel is `homelab-2` (889b6bf2); creds Secret `cloudflared-credentials` and origin cert `cert-pem-file-secret` are created with kubectl, never committed. The old `homelab` tunnel was deleted on 2026-11-25 to lock out a stray connector.
+- `cloudflared.yaml` — plain manifests at `k8s/manifest/cloudflared/` → ns `cloudflare` (auto-sync, no prune/self-heal), image `cloudflare/cloudflared:2026.11.2`. Rendered from `community-charts/cloudflared` 2.2.7, which hardcodes its ConfigMap name. Tunnel is `homelab-2` (889b6bf2); creds Secret `cloudflared-credentials` and origin cert `cert-pem-file-secret` are created with kubectl, never committed. The old `homelab` tunnel was deleted on 2026-11-25 to lock out a stray connector.
 - `monitoring.yaml` — `victoria-metrics-k8s-stack` 0.79.1 → ns `monitoring` (auto-sync, prune, self-heal, ServerSideApply)
 - `victoria-logs.yaml` — `victoria-logs-single` 0.13.9 → ns `monitoring` (auto-sync, prune, self-heal)
 - `fluent-bit.yaml` — `fluent-bit` 0.57.9 → ns `monitoring` (auto-sync, prune, self-heal)
@@ -148,7 +148,7 @@ The tunnel routes straight to each Service (not through Traefik):
 | grafana.osose.xyz | monitoring-grafana.monitoring | 80 |
 | techguide.osose.xyz | tech-noexp-svc.landing-pages | 80 |
 | jellyfin.osose.xyz | jellyfin.jellyfin | 8096 |
-| sonar.osose.xyz | sonarr.jellyfin | 8989 (ingress rule only — no DNS record exists, so not reachable) |
+| sonar.osose.xyz | sonarr.jellyfin | 8989 |
 
 ArgoCD and Grafana log in via Authentik OIDC (Grafana: `grafana-admins` → Admin, else Viewer). WordPress (`cognitaid.com`) uses its own `cloudflared` Deployment in ns `wordpress`; image is `wordpress:php8.5-apache`.
 
